@@ -1,0 +1,298 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "TennisMember API",
+    "description": "Socios Backoffice API — Auth, Members CRUD y webhook Google Form.\n\nFlujo sugerido:\n1. Seleccionar environment (Local / Test / Production)\n2. Ejecutar Auth → Login (guarda `token` automáticamente)\n3. Usar el resto de requests con Bearer token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Health check público (sin autenticación)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code === 200 && json?.data?.token) {",
+                  "  pm.environment.set('token', json.data.token);",
+                  "  pm.test('Token saved to environment', function () {",
+                  "    pm.expect(pm.environment.get('token')).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login con email/password. En éxito guarda `token` en el environment activo."
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Usuario autenticado actual (requiere Bearer token)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "List members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/members?page=1&pageSize=20&search=&condition=&status=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Página (mín. 1)"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20",
+                  "description": "Tamaño de página (1–100)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Búsqueda por nombre/email",
+                  "disabled": true
+                },
+                {
+                  "key": "condition",
+                  "value": "SOCIO_REGULAR",
+                  "description": "SOCIO_REGULAR | ABONADO_TENIS",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "1",
+                  "description": "0=Disabled, 1=Enabled, 2=Pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listado con búsqueda, filtros y paginación. Autenticado (ADMIN o USER)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get member by id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('memberId')) {",
+                  "  console.warn('Set memberId in the active environment before calling this request.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members", "{{memberId}}"]
+            },
+            "description": "Detalle de socio por id. Requiere `memberId` en el environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Create member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if ((pm.response.code === 201) && json?.data?.id) {",
+                  "  pm.environment.set('memberId', json.data.id);",
+                  "  pm.test('memberId saved to environment', function () {",
+                  "    pm.expect(pm.environment.get('memberId')).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Juan Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"age\": 32,\n  \"phone\": \"2922440000\",\n  \"condition\": \"SOCIO_REGULAR\",\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members"]
+            },
+            "description": "Alta de socio (solo ADMIN). Guarda `memberId` en el environment si responde 201.\n\n`condition`: SOCIO_REGULAR | ABONADO_TENIS\n`status`: 0 | 1 | 2"
+          },
+          "response": []
+        },
+        {
+          "name": "Update member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Juan Perez\",\n  \"age\": 33,\n  \"phone\": \"2922440001\",\n  \"condition\": \"ABONADO_TENIS\",\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members", "{{memberId}}"]
+            },
+            "description": "Actualización parcial (solo ADMIN). El email es inmutable."
+          },
+          "response": []
+        },
+        {
+          "name": "Soft delete member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/members/{{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members", "{{memberId}}"]
+            },
+            "description": "Soft delete de socio (solo ADMIN)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Google Form — create pending member",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Webhook-Secret",
+                "value": "{{webhookSecret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aspirante@mail.com\",\n  \"fullName\": \"Aspirante Demo\",\n  \"age\": 28,\n  \"phone\": \"2922440000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/google-form",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "google-form"]
+            },
+            "description": "Alta automática de Abonado Tenis en estado Pendiente (status=2).\nAutenticación por header `X-Webhook-Secret` (no JWT)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

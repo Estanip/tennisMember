@@ -1,0 +1,16 @@
+# Railway — service Web (test)
+# In the Railway dashboard: set Root Directory to `/` (repo root)
+# and point Config File to this path, OR paste the commands manually.
+#
+# Required variable at BUILD time: NEXT_PUBLIC_API_URL=https://<api-public-url>/api
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "yarn install --frozen-lockfile && yarn build:web"
+
+[deploy]
+startCommand = "yarn start:web"
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

@@ -1,0 +1,45 @@
+# 🤖 AGENTE — REGLAS GENÉRICAS
+
+Este archivo es **reutilizable entre proyectos**. Contiene solo protocolo y estándares transversales.
+Las reglas específicas del producto viven en los documentos referenciados abajo: **leelos antes de proponer o editar**.
+
+## 🛡️ PROTOCOLO DE TRABAJO (ESTRICTO)
+
+1. **Análisis**: Lee el contexto del producto y los docs relevantes al cambio (stack, arquitectura, backend/frontend, modelos, deployment).
+2. **Planificación**: Presenta un PLAN DE ACCIÓN detallado.
+3. **Aprobación**: ESPERA confirmación explícita (`PROCEDE`) antes de editar cualquier archivo.
+4. **Verificación**: Ejecuta las validaciones de calidad del proyecto antes de finalizar (format, lint, typecheck).
+
+## 🧹 CALIDAD DE CÓDIGO (GENÉRICO)
+
+- Tipado estricto; prohibido `any` implícito o explícito salvo justificación excepcional aprobada.
+- Buenas prácticas siempre: **Clean Code** y principios **SOLID**.
+- Sin comentarios obvios; solo explicar lógica compleja o no evidente.
+- Preferir funciones puras y reutilizables donde aporte claridad.
+- Respetar el tooling de calidad ya definido en el proyecto (ver `docs/STACK.md`).
+
+## 📄 CIERRE DE TAREA (GENÉRICO)
+
+1. **Validación**: format → lint → typecheck; corregir errores antes de continuar.
+2. **Documentar**: actualizar `CHANGELOG.md` (Keep a Changelog) cuando el cambio sea relevante.
+3. **Commit**: Conventional Commits (scope opcional). Solo crear commits si el usuario lo pide.
+4. **NO** incluir metadatos de IA ni co-autoría de Cursor.
+
+## 📚 CONTEXTO ESPECÍFICO DEL PROYECTO
+
+Leer según la tarea:
+
+| Área | Documento |
+| --- | --- |
+| Producto / negocio | `@docs/PRODUCT_CONTEXT.md` |
+| Tech stack | `@docs/STACK.md` |
+| Arquitectura | `@docs/ARQUITECTURA.md` |
+| Backend | `@docs/BACKEND.md` |
+| Frontend | `@docs/FRONTEND.md` |
+| Modelos de datos | `@docs/MODELOS.md` |
+| Base de datos | `@docs/DATABASE.md` |
+| Deployment / entornos | `@docs/DEPLOYMENT.md` |
+| Glosario | `@docs/CONCEPTOS.md` |
+| Google Form | `@docs/GOOGLE_FORM.md` |
+| Setup | `@README.md` |
+| Historial | `@CHANGELOG.md` |

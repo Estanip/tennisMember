@@ -1,0 +1,38 @@
+{
+  "name": "socios-backoffice",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "yarn workspace @socios/api dev",
+    "dev:web": "yarn workspace @socios/web dev",
+    "build": "yarn workspace @socios/shared build && yarn workspace @socios/api build && yarn workspace @socios/web build",
+    "build:shared": "yarn workspace @socios/shared build",
+    "build:api": "yarn workspace @socios/shared build && yarn workspace @socios/api prisma:generate && yarn workspace @socios/api build",
+    "build:web": "yarn workspace @socios/shared build && yarn workspace @socios/web build",
+    "start:api": "yarn workspace @socios/api start",
+    "start:web": "yarn workspace @socios/web start",
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "yarn workspace @socios/shared typecheck && yarn workspace @socios/api typecheck && yarn workspace @socios/web typecheck",
+    "db:generate": "yarn workspace @socios/api prisma:generate",
+    "db:migrate": "yarn workspace @socios/api prisma:migrate",
+    "db:migrate:deploy": "yarn workspace @socios/api prisma:migrate:deploy",
+    "db:seed": "yarn workspace @socios/api prisma:seed",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.3",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "yarn@1.22.22"
+}

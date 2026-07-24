@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum MemberCondition {
+  SOCIO_REGULAR
+  ABONADO_TENIS
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Member {
+  id        String          @id @default(cuid())
+  fullName  String
+  email     String          @unique
+  age       Int
+  phone     String?
+  condition MemberCondition
+  /// 0 = No Habilitado, 1 = Habilitado, 2 = Pendiente
+  status    Int
+  deletedAt DateTime?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([deletedAt])
+  @@index([condition])
+  @@index([status])
+  @@index([fullName])
+  @@index([email])
+
+  @@map("members")
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  path      String?
+  method    String?
+  statusCode Int?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@map("error_log")
+}

@@ -1,0 +1,15 @@
+# Railway — service API (test)
+# In the Railway dashboard: set Root Directory to `/` (repo root)
+# and point Config File to this path, OR paste the commands manually.
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "yarn install --frozen-lockfile && yarn build:api"
+
+[deploy]
+startCommand = "yarn start:api"
+releaseCommand = "yarn db:migrate:deploy"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
