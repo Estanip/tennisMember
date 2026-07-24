@@ -21,6 +21,7 @@ Plantilla: `apps/web/.env.example`.
 ## UI
 
 - Estilo: limpio y funcional (sin brand obligatorio en el MVP).
+- Temas **claro** / **oscuro** (`data-theme` + `localStorage`); toggle en login y topbar.
 - Pantallas MVP:
   - Login
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)

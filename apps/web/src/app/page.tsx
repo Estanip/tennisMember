@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/context/auth-context";
 
 export default function LoginPage() {
@@ -34,6 +35,9 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
+      <div className="login-theme-toggle">
+        <ThemeToggle />
+      </div>
       <section className="card login-card stack">
         <div>
           <h1>Socios Backoffice</h1>

@@ -22,3 +22,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Variables de entorno documentadas y plantillas por servicio (API, Web, Docker Compose)
 - CI GitHub Actions (lint, typecheck, build) y configs Railway test (`railway.api.toml`, `railway.web.toml`)
 - Guía de deploy test en Railway (`docs/DEPLOYMENT.md`)
+- Modo claro / oscuro en el backoffice web (preferencia en `localStorage`)

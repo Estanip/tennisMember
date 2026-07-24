@@ -1,4 +1,5 @@
-:root {
+:root,
+[data-theme="light"] {
   --bg: #f3f6f8;
   --bg-accent: #e7eef3;
   --surface: #ffffff;
@@ -10,8 +11,48 @@
   --danger: #9b1c1c;
   --danger-hover: #7f1616;
   --shadow: 0 10px 30px rgba(21, 32, 43, 0.06);
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: #ffffff;
+  --btn-secondary-bg: #eef3f6;
+  --btn-secondary-hover: #e2eaef;
+  --badge-enabled-bg: #d9f2ea;
+  --badge-enabled-text: #0f5c4c;
+  --badge-pending-bg: #fef3c7;
+  --badge-pending-text: #92400e;
+  --badge-disabled-bg: #f6e2e2;
+  --badge-disabled-text: #9b1c1c;
+  --grad-left: #d9ebe6;
+  --grad-right: #d7e4f2;
   --radius: 10px;
   --font: "Segoe UI", "Helvetica Neue", sans-serif;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1419;
+  --bg-accent: #1a222c;
+  --surface: #182029;
+  --text: #e8eef3;
+  --muted: #9aa8b6;
+  --border: #2a3542;
+  --primary: #2dd4a8;
+  --primary-hover: #25b892;
+  --danger: #f07178;
+  --danger-hover: #e0555d;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --topbar-bg: rgba(24, 32, 41, 0.9);
+  --input-bg: #121820;
+  --btn-secondary-bg: #243040;
+  --btn-secondary-hover: #2e3c4e;
+  --badge-enabled-bg: #14352c;
+  --badge-enabled-text: #6ee7b7;
+  --badge-pending-bg: #3a2e14;
+  --badge-pending-text: #fbbf24;
+  --badge-disabled-bg: #3a1c1c;
+  --badge-disabled-text: #fca5a5;
+  --grad-left: #143028;
+  --grad-right: #1a2433;
+  color-scheme: dark;
 }
 
 * {
@@ -26,8 +67,8 @@ body {
   font-family: var(--font);
   color: var(--text);
   background:
-    radial-gradient(circle at top left, #d9ebe6 0%, transparent 40%),
-    radial-gradient(circle at top right, #d7e4f2 0%, transparent 35%), var(--bg);
+    radial-gradient(circle at top left, var(--grad-left) 0%, transparent 40%),
+    radial-gradient(circle at top right, var(--grad-right) 0%, transparent 35%), var(--bg);
 }
 
 a {
@@ -39,6 +80,7 @@ button,
 input,
 select {
   font: inherit;
+  color: inherit;
 }
 
 .app-shell {
@@ -53,7 +95,7 @@ select {
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--topbar-bg);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(8px);
   position: sticky;
@@ -133,7 +175,7 @@ select {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
-  background: #fff;
+  background: var(--input-bg);
 }
 
 .btn {
@@ -146,6 +188,10 @@ select {
   font-weight: 600;
 }
 
+[data-theme="dark"] .btn {
+  color: #0b1a16;
+}
+
 .btn:hover {
   background: var(--primary-hover);
 }
@@ -156,16 +202,17 @@ select {
 }
 
 .btn-secondary {
-  background: #eef3f6;
+  background: var(--btn-secondary-bg);
   color: var(--text);
 }
 
 .btn-secondary:hover {
-  background: #e2eaef;
+  background: var(--btn-secondary-hover);
 }
 
 .btn-danger {
   background: var(--danger);
+  color: white;
 }
 
 .btn-danger:hover {
@@ -204,18 +251,18 @@ th {
 }
 
 .badge.enabled {
-  background: #d9f2ea;
-  color: #0f5c4c;
+  background: var(--badge-enabled-bg);
+  color: var(--badge-enabled-text);
 }
 
 .badge.pending {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--badge-pending-bg);
+  color: var(--badge-pending-text);
 }
 
 .badge.disabled {
-  background: #f6e2e2;
-  color: #9b1c1c;
+  background: var(--badge-disabled-bg);
+  color: var(--badge-disabled-text);
 }
 
 .error {
@@ -228,6 +275,13 @@ th {
   display: grid;
   place-items: center;
   padding: 1rem;
+  position: relative;
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
 }
 
 .login-card {

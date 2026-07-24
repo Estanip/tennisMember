@@ -4,6 +4,7 @@ import { USER_ROLE_LABELS } from "@socios/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/context/auth-context";
 
 export function AppShell({
@@ -42,6 +43,7 @@ export function AppShell({
           <span>
             {user.name} · {USER_ROLE_LABELS[user.role]}
           </span>
+          <ThemeToggle />
           <button
             type="button"
             className="btn btn-secondary"
