@@ -27,12 +27,24 @@ function onFormSubmit(e) {
 
   const payload = {
     email: email,
-    fullName: byTitle[normalizeTitle("NOMBRE Y APELLIDO")] || "",
-    age: Number(byTitle[normalizeTitle("EDAD")]),
+    firstName: byTitle[normalizeTitle("NOMBRE")] || "",
+    lastName: byTitle[normalizeTitle("APELLIDO")] || "",
+    dni: String(byTitle[normalizeTitle("DNI")] || "").replace(/\D/g, ""),
+    birthDate:
+      byTitle[normalizeTitle("FECHA DE NACIMIENTO")] ||
+      byTitle[normalizeTitle("FECHA NACIMIENTO")] ||
+      "",
     phone: byTitle[normalizeTitle("NUMERO DE TELEFONO")] || "",
   };
 
-  if (!payload.email || !payload.fullName || !payload.phone || Number.isNaN(payload.age)) {
+  if (
+    !payload.email ||
+    !payload.firstName ||
+    !payload.lastName ||
+    !payload.dni ||
+    !payload.birthDate ||
+    !payload.phone
+  ) {
     throw new Error("Missing required form fields: " + JSON.stringify(payload));
   }
 

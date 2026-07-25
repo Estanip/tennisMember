@@ -1,4 +1,5 @@
 import {
+  MEMBER_AGE_CATEGORIES,
   MEMBER_CONDITIONS,
   MEMBER_DELETE_REASON_VALUES,
   MEMBER_EDITABLE_STATUS_VALUES,
@@ -11,9 +12,14 @@ const memberSchema = {
   type: "object",
   required: [
     "id",
+    "firstName",
+    "lastName",
     "fullName",
     "email",
+    "dni",
+    "birthDate",
     "age",
+    "ageCategory",
     "phone",
     "condition",
     "status",
@@ -25,9 +31,17 @@ const memberSchema = {
   additionalProperties: false,
   properties: {
     id: { type: "string" },
+    firstName: { type: "string" },
+    lastName: { type: "string" },
     fullName: { type: "string" },
     email: { type: "string" },
+    dni: { type: "string" },
+    birthDate: { type: "string" },
     age: { type: "integer" },
+    ageCategory: {
+      type: "string",
+      enum: [MEMBER_AGE_CATEGORIES.ADULTO, MEMBER_AGE_CATEGORIES.MENOR],
+    },
     phone: { type: ["string", "null"] },
     condition: {
       type: "string",
@@ -57,12 +71,14 @@ const errorResponseSchema = {
 
 const createBodySchema = {
   type: "object",
-  required: ["fullName", "email", "age", "condition", "status"],
+  required: ["firstName", "lastName", "email", "dni", "birthDate", "condition", "status"],
   additionalProperties: false,
   properties: {
-    fullName: { type: "string", minLength: 2, maxLength: 80 },
+    firstName: { type: "string", minLength: 2, maxLength: 60 },
+    lastName: { type: "string", minLength: 2, maxLength: 60 },
     email: { type: "string", format: "email", maxLength: 254 },
-    age: { type: "integer", minimum: 0, maximum: 100 },
+    dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
+    birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
       anyOf: [
         { type: "null" },
@@ -82,8 +98,10 @@ const updateBodySchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    fullName: { type: "string", minLength: 2, maxLength: 80 },
-    age: { type: "integer", minimum: 0, maximum: 100 },
+    firstName: { type: "string", minLength: 2, maxLength: 60 },
+    lastName: { type: "string", minLength: 2, maxLength: 60 },
+    dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
+    birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
       anyOf: [
         { type: "null" },

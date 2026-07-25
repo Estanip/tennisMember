@@ -24,9 +24,11 @@ export class GoogleFormWebhookService {
 
     return this.members.create(
       {
-        fullName: payload.fullName,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
         email: payload.email,
-        age: payload.age,
+        dni: payload.dni,
+        birthDate: payload.birthDate,
         phone,
         condition: MEMBER_CONDITIONS.ABONADO_TENIS,
         status: MEMBER_STATUS.PENDING,

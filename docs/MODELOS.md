@@ -18,9 +18,13 @@ Autenticación de acceso al backoffice.
 
 | Campo | Notas |
 | --- | --- |
-| fullName | Obligatorio; editable |
+| firstName | Obligatorio; editable |
+| lastName | Obligatorio; editable |
+| fullName | Derivado en API (`firstName` + `lastName`); no se persiste |
 | email | Obligatorio; único; **no editable** tras el alta |
-| age | Entero; obligatorio; editable |
+| dni | Obligatorio; único; 7–8 dígitos (ARG); editable |
+| birthDate | Obligatorio; fecha calendario; editable |
+| age / ageCategory | Derivados en API/UI (no columnas de negocio persistidas para categoría) |
 | phone | Opcional en alta manual; obligatorio vía Google Form |
 | condition | `SOCIO_REGULAR` \| `ABONADO_TENIS` |
 | status | `0` No Habilitado · `1` Habilitado · `2` Pendiente · `3` Eliminado |

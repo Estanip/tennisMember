@@ -1,4 +1,10 @@
-import type { MemberCondition, MemberDeleteReason, MemberStatus, UserRole } from "./constants.js";
+import type {
+  MemberAgeCategory,
+  MemberCondition,
+  MemberDeleteReason,
+  MemberStatus,
+  UserRole,
+} from "./constants.js";
 
 export interface ApiSuccessResponse<T = unknown> {
   success: true;
@@ -33,9 +39,18 @@ export interface LoginResponse {
 
 export interface Member {
   id: string;
+  firstName: string;
+  lastName: string;
+  /** Derived: "{firstName} {lastName}" */
   fullName: string;
   email: string;
+  dni: string;
+  /** ISO calendar date YYYY-MM-DD */
+  birthDate: string;
+  /** Derived from birthDate at response time */
   age: number;
+  /** Derived from age; not persisted */
+  ageCategory: MemberAgeCategory;
   phone: string | null;
   condition: MemberCondition;
   status: MemberStatus;
@@ -46,17 +61,23 @@ export interface Member {
 }
 
 export interface CreateMemberRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  age: number;
+  dni: string;
+  /** ISO YYYY-MM-DD or dd/mm/yyyy */
+  birthDate: string;
   phone?: string | null;
   condition: MemberCondition;
   status: MemberStatus;
 }
 
 export interface UpdateMemberRequest {
-  fullName?: string;
-  age?: number;
+  firstName?: string;
+  lastName?: string;
+  dni?: string;
+  /** ISO YYYY-MM-DD or dd/mm/yyyy */
+  birthDate?: string;
   phone?: string | null;
   condition?: MemberCondition;
   status?: MemberStatus;
@@ -77,8 +98,11 @@ export interface MemberListQuery {
 
 export interface GoogleFormMemberPayload {
   email: string;
-  fullName: string;
-  age: number;
+  firstName: string;
+  lastName: string;
+  dni: string;
+  /** Expected as dd/mm/yyyy from the form */
+  birthDate: string;
   phone: string;
 }
 

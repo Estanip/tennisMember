@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validaciones de socio: nombre 2–80, email válido, edad 0–100
 - Alerta por email al admin (`ADMIN_ALERT_EMAIL` / Resend) al crear socio (app o Google Form); fallo de mail no bloquea el alta
 - El alta no espera el envío del mail (fire-and-forget); Resend con timeout de 10s
+- Campo obligatorio `dni` (ARG, 7–8 dígitos, único) en padrón, forms, Google Form y API
+- `birthDate` en DB; edad y Categoría (Menor &lt; 14 / Adulto) derivadas; Google Form envía fecha `dd/mm/aaaa`
+- Nombre y apellido separados (`firstName` / `lastName`); `fullName` derivado en la API
 - Edición de socio: todos los campos editables excepto email
 - Soft delete con status `3` (Eliminado) + `deletedAt`; filtro y restablecer a Habilitado
 - Motivo de baja al eliminar: `FALTA_DE_PAGO` | `BAJA_DE_SOCIO` | `OTRA` (+ detalle obligatorio si Otra); se limpia al restablecer

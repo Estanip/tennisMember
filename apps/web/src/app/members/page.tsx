@@ -9,6 +9,7 @@ import type {
 } from "@socios/shared";
 import {
   getMemberStatusLabel,
+  MEMBER_AGE_CATEGORY_LABELS,
   MEMBER_CONDITION_LABELS,
   MEMBER_CONDITIONS,
   MEMBER_DELETE_REASON_DETAIL_MAX_LENGTH,
@@ -151,7 +152,7 @@ export default function MembersPage() {
             <label htmlFor="search">Búsqueda</label>
             <input
               id="search"
-              placeholder="Nombre, email o teléfono"
+              placeholder="Nombre, apellido, email, DNI o teléfono"
               value={search}
               onChange={(e) => {
                 setPage(1);
@@ -206,9 +207,12 @@ export default function MembersPage() {
               <table>
                 <thead>
                   <tr>
+                    <th>Apellido</th>
                     <th>Nombre</th>
+                    <th>DNI</th>
                     <th>Email</th>
                     <th>Edad</th>
+                    <th>Categoría</th>
                     <th>Teléfono</th>
                     <th>Condición</th>
                     <th>Estado</th>
@@ -218,7 +222,7 @@ export default function MembersPage() {
                 <tbody>
                   {data.items.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 7 : 6} className="muted">
+                      <td colSpan={isAdmin ? 10 : 9} className="muted">
                         No hay socios para mostrar
                       </td>
                     </tr>
@@ -228,9 +232,12 @@ export default function MembersPage() {
                       const reasonText = formatDeleteReason(member);
                       return (
                         <tr key={member.id} className={isDeleted ? "row-deleted" : undefined}>
-                          <td>{member.fullName}</td>
+                          <td>{member.lastName}</td>
+                          <td>{member.firstName}</td>
+                          <td>{member.dni}</td>
                           <td>{member.email}</td>
                           <td>{member.age}</td>
+                          <td>{MEMBER_AGE_CATEGORY_LABELS[member.ageCategory]}</td>
                           <td>{member.phone ?? "—"}</td>
                           <td>{MEMBER_CONDITION_LABELS[member.condition]}</td>
                           <td>

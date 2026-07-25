@@ -10,15 +10,18 @@ import {
   isEditableMemberStatus,
   isMemberDeleteReason,
   isMemberStatus,
-  isValidMemberAge,
+  isValidMemberBirthDate,
   isValidMemberDeleteReasonDetail,
+  isValidMemberDni,
   isValidMemberEmail,
-  isValidMemberFullName,
+  isValidMemberNamePart,
   isValidOptionalMemberPhone,
   MEMBER_DELETE_REASONS,
   MEMBER_STATUS,
-  normalizeFullName,
+  normalizeMemberBirthDate,
+  normalizeMemberDni,
   normalizeMemberEmail,
+  normalizeMemberNamePart,
   normalizeOptionalPhone,
 } from "@socios/shared";
 import { AppError } from "../../lib/errors.js";
@@ -42,10 +45,13 @@ export class MemberService {
 
     if (query.search?.trim()) {
       const search = query.search.trim();
+      const dniSearch = normalizeMemberDni(search);
       where.OR = [
-        { fullName: { contains: search, mode: "insensitive" } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
         { phone: { contains: search, mode: "insensitive" } },
+        ...(dniSearch.length > 0 ? [{ dni: { contains: dniSearch } }] : []),
       ];
     }
 
@@ -64,7 +70,7 @@ export class MemberService {
       prisma.member.count({ where }),
       prisma.member.findMany({
         where,
-        orderBy: { fullName: "asc" },
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -93,25 +99,37 @@ export class MemberService {
 
   async create(input: CreateMemberRequest, options: { source?: MemberCreatedSource } = {}) {
     this.assertValidStatus(input.status);
-    this.assertValidAge(input.age);
-    const fullName = this.assertValidFullName(input.fullName);
+    const firstName = this.assertValidNamePart(input.firstName, "first name");
+    const lastName = this.assertValidNamePart(input.lastName, "last name");
     const email = this.assertValidEmail(input.email);
+    const dni = this.assertValidDni(input.dni);
+    const birthDate = this.assertValidBirthDate(input.birthDate);
     const source = options.source ?? "APP";
 
-    const existing = await prisma.member.findFirst({
+    const existingByEmail = await prisma.member.findFirst({
       where: { email },
     });
 
-    if (existing && !existing.deletedAt) {
+    if (existingByEmail && !existingByEmail.deletedAt) {
       throw new AppError("Email already in use", 409, "EMAIL_TAKEN");
     }
 
-    if (existing?.deletedAt) {
+    const existingByDni = await prisma.member.findFirst({
+      where: { dni },
+    });
+
+    if (existingByDni && existingByDni.id !== existingByEmail?.id) {
+      throw new AppError("DNI already in use", 409, "DNI_TAKEN");
+    }
+
+    if (existingByEmail?.deletedAt) {
       const restored = await prisma.member.update({
-        where: { id: existing.id },
+        where: { id: existingByEmail.id },
         data: {
-          fullName,
-          age: input.age,
+          firstName,
+          lastName,
+          dni,
+          birthDate,
           phone: normalizePhone(input.phone),
           condition: input.condition,
           status: input.status,
@@ -127,9 +145,11 @@ export class MemberService {
 
     const member = await prisma.member.create({
       data: {
-        fullName,
+        firstName,
+        lastName,
         email,
-        age: input.age,
+        dni,
+        birthDate,
         phone: normalizePhone(input.phone),
         condition: input.condition,
         status: input.status,
@@ -154,16 +174,33 @@ export class MemberService {
       this.assertValidStatus(input.status);
     }
 
-    if (input.age !== undefined) {
-      this.assertValidAge(input.age);
+    let dni: string | undefined;
+    if (input.dni !== undefined) {
+      dni = this.assertValidDni(input.dni);
+      const taken = await prisma.member.findFirst({
+        where: { dni, NOT: { id } },
+      });
+      if (taken) {
+        throw new AppError("DNI already in use", 409, "DNI_TAKEN");
+      }
     }
+
+    const birthDate =
+      input.birthDate !== undefined ? this.assertValidBirthDate(input.birthDate) : undefined;
 
     const updated = await prisma.member.update({
       where: { id },
       data: {
-        fullName:
-          input.fullName !== undefined ? this.assertValidFullName(input.fullName) : undefined,
-        age: input.age,
+        firstName:
+          input.firstName !== undefined
+            ? this.assertValidNamePart(input.firstName, "first name")
+            : undefined,
+        lastName:
+          input.lastName !== undefined
+            ? this.assertValidNamePart(input.lastName, "last name")
+            : undefined,
+        dni,
+        birthDate,
         phone: input.phone !== undefined ? normalizePhone(input.phone) : undefined,
         condition: input.condition,
         status: input.status,
@@ -232,16 +269,10 @@ export class MemberService {
     }
   }
 
-  private assertValidAge(age: number): void {
-    if (!isValidMemberAge(age)) {
-      throw new AppError("Age must be an integer between 0 and 100", 400, "INVALID_AGE");
-    }
-  }
-
-  private assertValidFullName(fullName: string): string {
-    const normalized = normalizeFullName(fullName);
-    if (!isValidMemberFullName(normalized)) {
-      throw new AppError("Full name must be between 2 and 80 characters", 400, "INVALID_FULL_NAME");
+  private assertValidNamePart(value: string, label: string): string {
+    const normalized = normalizeMemberNamePart(value);
+    if (!isValidMemberNamePart(normalized)) {
+      throw new AppError(`${label} must be between 2 and 60 characters`, 400, "INVALID_NAME_PART");
     }
     return normalized;
   }
@@ -252,6 +283,26 @@ export class MemberService {
       throw new AppError("Invalid email address", 400, "INVALID_EMAIL");
     }
     return normalized;
+  }
+
+  private assertValidDni(dni: string): string {
+    const normalized = normalizeMemberDni(dni);
+    if (!isValidMemberDni(normalized)) {
+      throw new AppError("DNI must be 7 or 8 digits", 400, "INVALID_DNI");
+    }
+    return normalized;
+  }
+
+  private assertValidBirthDate(value: string): Date {
+    const iso = normalizeMemberBirthDate(value);
+    if (!iso || !isValidMemberBirthDate(iso)) {
+      throw new AppError(
+        "Birth date must be a valid date (YYYY-MM-DD or dd/mm/yyyy) with age between 0 and 100",
+        400,
+        "INVALID_BIRTH_DATE",
+      );
+    }
+    return new Date(`${iso}T00:00:00.000Z`);
   }
 }
 

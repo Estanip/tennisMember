@@ -9,7 +9,8 @@ Cada envío crea un socio con:
 
 - `condition` = `ABONADO_TENIS`
 - `status` = `2` (Pendiente)
-- Campos: email, nombre, edad, teléfono
+- Campos: email, nombre, apellido, DNI, fecha de nacimiento, teléfono
+- La edad y la categoría (Adulto/Menor) se calculan al consultar (Menor = edad &lt; 14)
 
 El admin aprueba cambiando el estado a **Habilitado** en el backoffice.
 
@@ -26,11 +27,15 @@ Body:
 ```json
 {
   "email": "aspirante@mail.com",
-  "fullName": "Juan Perez",
-  "age": 28,
+  "firstName": "Juan",
+  "lastName": "Perez",
+  "dni": "30123456",
+  "birthDate": "15/03/1995",
   "phone": "2922440000"
 }
 ```
+
+`birthDate` acepta `dd/mm/aaaa` o `YYYY-MM-DD`.
 
 Variable de entorno en `apps/api/.env`:
 
@@ -57,7 +62,7 @@ ngrok http 3003
 curl -X POST "https://xxxx.ngrok-free.app/api/webhooks/google-form" \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: local-google-form-webhook-secret" \
-  -d "{\"email\":\"test@mail.com\",\"fullName\":\"Test User\",\"age\":30,\"phone\":\"123456\"}"
+  -d "{\"email\":\"test@mail.com\",\"firstName\":\"Test\",\"lastName\":\"User\",\"dni\":\"30123456\",\"birthDate\":\"15/03/1995\",\"phone\":\"2914123456\"}"
 ```
 
 ## Apps Script (pegar en el Form)
@@ -78,6 +83,10 @@ Si el script está en la **Spreadsheet** vinculada al form, el trigger también 
 El script busca estas etiquetas (como en el form):
 
 - `Email`
-- `NOMBRE Y APELLIDO`
-- `EDAD`
+- `NOMBRE`
+- `APELLIDO`
+- `DNI`
+- `FECHA DE NACIMIENTO` (formato `dd/mm/aaaa`)
 - `NUMERO DE TELEFONO`
+
+Usá preguntas separadas **`Nombre`** y **`Apellido`** (obligatorias). Actualizá el Apps Script con `integrations/google-form/Code.gs`.

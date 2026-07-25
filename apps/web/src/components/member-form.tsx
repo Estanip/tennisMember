@@ -2,28 +2,36 @@
 
 import type { CreateMemberRequest, MemberCondition, MemberStatus } from "@socios/shared";
 import {
-  isValidMemberAge,
+  isValidMemberBirthDate,
+  isValidMemberDni,
   isValidMemberEmail,
-  isValidMemberFullName,
+  isValidMemberNamePart,
   isValidOptionalMemberPhone,
-  MEMBER_AGE_MAX,
-  MEMBER_AGE_MIN,
   MEMBER_CONDITION_LABELS,
   MEMBER_CONDITIONS,
+  MEMBER_DNI_MAX_LENGTH,
   MEMBER_EDITABLE_STATUS_VALUES,
-  MEMBER_FULL_NAME_MAX_LENGTH,
-  MEMBER_FULL_NAME_MIN_LENGTH,
+  MEMBER_NAME_PART_MAX_LENGTH,
+  MEMBER_NAME_PART_MIN_LENGTH,
   MEMBER_PHONE_LENGTH,
   MEMBER_STATUS,
   MEMBER_STATUS_LABELS,
-  normalizeFullName,
+  normalizeMemberBirthDate,
+  normalizeMemberDni,
   normalizeMemberEmail,
+  normalizeMemberNamePart,
   normalizeOptionalPhone,
 } from "@socios/shared";
 import { type FormEvent, useState } from "react";
 
 interface MemberFormProps {
-  initial?: Partial<CreateMemberRequest> & { email?: string };
+  initial?: Partial<CreateMemberRequest> & {
+    email?: string;
+    dni?: string;
+    birthDate?: string;
+    firstName?: string;
+    lastName?: string;
+  };
   emailReadOnly?: boolean;
   submitLabel: string;
   onSubmit: (values: CreateMemberRequest) => Promise<void>;
@@ -35,9 +43,11 @@ export function MemberForm({
   submitLabel,
   onSubmit,
 }: MemberFormProps) {
-  const [fullName, setFullName] = useState(initial?.fullName ?? "");
+  const [firstName, setFirstName] = useState(initial?.firstName ?? "");
+  const [lastName, setLastName] = useState(initial?.lastName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
-  const [age, setAge] = useState(String(initial?.age ?? ""));
+  const [dni, setDni] = useState(initial?.dni ?? "");
+  const [birthDate, setBirthDate] = useState(initial?.birthDate ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
   const [condition, setCondition] = useState<MemberCondition>(
     initial?.condition ?? MEMBER_CONDITIONS.SOCIO_REGULAR,
@@ -51,10 +61,19 @@ export function MemberForm({
     setSubmitting(true);
     setError(null);
 
-    const normalizedName = normalizeFullName(fullName);
-    if (!isValidMemberFullName(normalizedName)) {
+    const normalizedFirstName = normalizeMemberNamePart(firstName);
+    if (!isValidMemberNamePart(normalizedFirstName)) {
       setError(
-        `El nombre completo debe tener entre ${MEMBER_FULL_NAME_MIN_LENGTH} y ${MEMBER_FULL_NAME_MAX_LENGTH} caracteres`,
+        `El nombre debe tener entre ${MEMBER_NAME_PART_MIN_LENGTH} y ${MEMBER_NAME_PART_MAX_LENGTH} caracteres`,
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    const normalizedLastName = normalizeMemberNamePart(lastName);
+    if (!isValidMemberNamePart(normalizedLastName)) {
+      setError(
+        `El apellido debe tener entre ${MEMBER_NAME_PART_MIN_LENGTH} y ${MEMBER_NAME_PART_MAX_LENGTH} caracteres`,
       );
       setSubmitting(false);
       return;
@@ -67,9 +86,16 @@ export function MemberForm({
       return;
     }
 
-    const parsedAge = Number(age);
-    if (!isValidMemberAge(parsedAge)) {
-      setError(`La edad debe ser un número entero entre ${MEMBER_AGE_MIN} y ${MEMBER_AGE_MAX}`);
+    const normalizedDni = normalizeMemberDni(dni);
+    if (!isValidMemberDni(normalizedDni)) {
+      setError("El DNI debe tener 7 u 8 dígitos");
+      setSubmitting(false);
+      return;
+    }
+
+    const normalizedBirthDate = normalizeMemberBirthDate(birthDate);
+    if (!normalizedBirthDate || !isValidMemberBirthDate(normalizedBirthDate)) {
+      setError("Ingresá una fecha de nacimiento válida (edad entre 0 y 100)");
       setSubmitting(false);
       return;
     }
@@ -85,9 +111,11 @@ export function MemberForm({
 
     try {
       await onSubmit({
-        fullName: normalizedName,
+        firstName: normalizedFirstName,
+        lastName: normalizedLastName,
         email: normalizedEmail,
-        age: parsedAge,
+        dni: normalizedDni,
+        birthDate: normalizedBirthDate,
         phone: normalizedPhone,
         condition,
         status,
@@ -103,17 +131,31 @@ export function MemberForm({
     <form className="card stack" onSubmit={handleSubmit} noValidate>
       <div className="row">
         <div className="field">
-          <label htmlFor="fullName">Nombre completo</label>
+          <label htmlFor="firstName">Nombre</label>
           <input
-            id="fullName"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value.slice(0, MEMBER_FULL_NAME_MAX_LENGTH))}
+            id="firstName"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value.slice(0, MEMBER_NAME_PART_MAX_LENGTH))}
             required
-            minLength={MEMBER_FULL_NAME_MIN_LENGTH}
-            maxLength={MEMBER_FULL_NAME_MAX_LENGTH}
-            autoComplete="name"
+            minLength={MEMBER_NAME_PART_MIN_LENGTH}
+            maxLength={MEMBER_NAME_PART_MAX_LENGTH}
+            autoComplete="given-name"
           />
         </div>
+        <div className="field">
+          <label htmlFor="lastName">Apellido</label>
+          <input
+            id="lastName"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value.slice(0, MEMBER_NAME_PART_MAX_LENGTH))}
+            required
+            minLength={MEMBER_NAME_PART_MIN_LENGTH}
+            maxLength={MEMBER_NAME_PART_MAX_LENGTH}
+            autoComplete="family-name"
+          />
+        </div>
+      </div>
+      <div className="row">
         <div className="field">
           <label htmlFor="email">{emailReadOnly ? "Email (no editable)" : "Email"}</label>
           <input
@@ -127,18 +169,32 @@ export function MemberForm({
             autoComplete="email"
           />
         </div>
+        <div className="field">
+          <label htmlFor="dni">DNI</label>
+          <input
+            id="dni"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={MEMBER_DNI_MAX_LENGTH}
+            pattern={`\\d{7,8}`}
+            title="7 u 8 dígitos, sin puntos"
+            placeholder="Ej: 30123456"
+            value={dni}
+            onChange={(e) =>
+              setDni(e.target.value.replace(/\D/g, "").slice(0, MEMBER_DNI_MAX_LENGTH))
+            }
+            required
+          />
+        </div>
       </div>
       <div className="row">
         <div className="field">
-          <label htmlFor="age">Edad</label>
+          <label htmlFor="birthDate">Fecha de nacimiento</label>
           <input
-            id="age"
-            type="number"
-            min={MEMBER_AGE_MIN}
-            max={MEMBER_AGE_MAX}
-            step={1}
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
+            id="birthDate"
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
             required
           />
         </div>

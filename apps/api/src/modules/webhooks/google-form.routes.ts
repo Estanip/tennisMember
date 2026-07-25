@@ -16,12 +16,14 @@ const errorResponseSchema = {
 
 const webhookBodySchema = {
   type: "object",
-  required: ["email", "fullName", "age", "phone"],
+  required: ["email", "firstName", "lastName", "dni", "birthDate", "phone"],
   additionalProperties: false,
   properties: {
     email: { type: "string", format: "email", maxLength: 254 },
-    fullName: { type: "string", minLength: 2, maxLength: 80 },
-    age: { type: "integer", minimum: 0, maximum: 100 },
+    firstName: { type: "string", minLength: 2, maxLength: 60 },
+    lastName: { type: "string", minLength: 2, maxLength: 60 },
+    dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
+    birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: { type: "string", pattern: "^\\d{10}$" },
   },
 } as const;
@@ -30,9 +32,14 @@ const memberSchema = {
   type: "object",
   required: [
     "id",
+    "firstName",
+    "lastName",
     "fullName",
     "email",
+    "dni",
+    "birthDate",
     "age",
+    "ageCategory",
     "phone",
     "condition",
     "status",
@@ -42,9 +49,14 @@ const memberSchema = {
   additionalProperties: false,
   properties: {
     id: { type: "string" },
+    firstName: { type: "string" },
+    lastName: { type: "string" },
     fullName: { type: "string" },
     email: { type: "string" },
+    dni: { type: "string" },
+    birthDate: { type: "string" },
     age: { type: "integer" },
+    ageCategory: { type: "string", enum: ["ADULTO", "MENOR"] },
     phone: { type: ["string", "null"] },
     condition: {
       type: "string",

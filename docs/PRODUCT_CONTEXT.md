@@ -27,9 +27,13 @@ Cada socio pertenece al club y tiene las siguientes propiedades:
 
 | Propiedad          | Descripción                       | Reglas                                                         |
 | ------------------ | --------------------------------- | -------------------------------------------------------------- |
-| Nombre Completo    | Nombre y apellido del socio       | Obligatorio; 2–80 caracteres; editable                                          |
+| Nombre             | Nombre de pila                    | Obligatorio; 2–60 caracteres; editable                                          |
+| Apellido           | Apellido                          | Obligatorio; 2–60 caracteres; editable                                          |
 | Email              | Identificador único del socio     | Obligatorio; formato email válido; único; **no editable** tras el alta               |
-| Edad               | Edad del socio (número)           | Obligatoria; entero 0–100; editable                                          |
+| DNI                | Documento nacional de identidad   | Obligatorio; 7–8 dígitos; único; editable                                          |
+| Fecha de nacimiento | Fecha de nacimiento del socio    | Obligatoria; se guarda en DB; la edad se calcula al consultar                      |
+| Edad               | Edad del socio (derivada)         | No se persiste; se infiere desde fecha de nacimiento (0–100)                       |
+| Categoría          | Adulto / Menor (solo UI)          | Menor si edad &lt; 14; no se guarda en DB                                           |
 | Número de teléfono | Contacto telefónico               | Opcional en alta manual; si se carga: exactamente 10 dígitos, sin 0 ni 15. Obligatorio en Google Form (misma regla) |
 | Condición          | Tipo de membresía                 | `Socio Regular` \| `Abonado Tenis`                             |
 | Estado             | Habilitación del socio en el club | DB: `0` No Habilitado · `1` Habilitado · `2` Pendiente · `3` Eliminado |
@@ -59,8 +63,10 @@ Campos del form → socio:
 | Form | Campo |
 | --- | --- |
 | Email | `email` |
-| NOMBRE Y APELLIDO | `fullName` |
-| EDAD | `age` |
+| NOMBRE | `firstName` |
+| APELLIDO | `lastName` |
+| DNI | `dni` |
+| FECHA DE NACIMIENTO | `birthDate` (`dd/mm/aaaa`) |
 | NUMERO DE TELEFONO | `phone` |
 
 Defaults al crear desde el form:

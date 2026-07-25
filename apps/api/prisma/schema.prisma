@@ -37,9 +37,13 @@ model User {
 
 model Member {
   id        String          @id @default(cuid())
-  fullName  String
+  firstName String
+  lastName  String
   email     String          @unique
-  age       Int
+  /// Argentine DNI: 7–8 digits, unique
+  dni       String          @unique
+  /// Calendar birth date; age is computed in the API from this field
+  birthDate DateTime        @db.Date
   phone     String?
   condition MemberCondition
   /// 0 = No Habilitado, 1 = Habilitado, 2 = Pendiente, 3 = Eliminado
@@ -55,8 +59,10 @@ model Member {
   @@index([deletedAt])
   @@index([condition])
   @@index([status])
-  @@index([fullName])
+  @@index([firstName])
+  @@index([lastName])
   @@index([email])
+  @@index([dni])
 
   @@map("members")
 }

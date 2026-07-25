@@ -41,8 +41,10 @@ export default function EditMemberPage() {
 
   async function handleUpdate(values: CreateMemberRequest) {
     await apiClient.updateMember(params.id, {
-      fullName: values.fullName,
-      age: values.age,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      dni: values.dni,
+      birthDate: values.birthDate,
       phone: values.phone,
       condition: values.condition,
       status: values.status,

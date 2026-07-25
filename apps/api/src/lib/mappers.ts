@@ -1,6 +1,16 @@
 import type { Member } from "@prisma/client";
 import type { MemberDeleteReason, MemberStatus, Member as SharedMember } from "@socios/shared";
-import { isMemberDeleteReason, isMemberStatus } from "@socios/shared";
+import {
+  formatMemberFullName,
+  getMemberAge,
+  getMemberAgeCategory,
+  isMemberDeleteReason,
+  isMemberStatus,
+} from "@socios/shared";
+
+function toIsoDate(value: Date): string {
+  return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, "0")}-${String(value.getUTCDate()).padStart(2, "0")}`;
+}
 
 export function toMemberDto(member: Member): SharedMember {
   const status: MemberStatus = isMemberStatus(member.status) ? member.status : (0 as MemberStatus);
@@ -8,12 +18,19 @@ export function toMemberDto(member: Member): SharedMember {
     member.deletedReason && isMemberDeleteReason(member.deletedReason)
       ? member.deletedReason
       : null;
+  const birthDate = toIsoDate(member.birthDate);
+  const age = getMemberAge(birthDate);
 
   return {
     id: member.id,
-    fullName: member.fullName,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    fullName: formatMemberFullName(member.firstName, member.lastName),
     email: member.email,
-    age: member.age,
+    dni: member.dni,
+    birthDate,
+    age,
+    ageCategory: getMemberAgeCategory(age),
     phone: member.phone,
     condition: member.condition,
     status,

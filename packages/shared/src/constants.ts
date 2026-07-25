@@ -89,24 +89,56 @@ export function isValidOptionalMemberPhone(phone: string | null | undefined): bo
   return MEMBER_PHONE_PATTERN.test(normalized);
 }
 
-export const MEMBER_FULL_NAME_MIN_LENGTH = 2;
+export const MEMBER_NAME_PART_MIN_LENGTH = 2;
+export const MEMBER_NAME_PART_MAX_LENGTH = 60;
+/** @deprecated Use MEMBER_NAME_PART_* */
+export const MEMBER_FULL_NAME_MIN_LENGTH = MEMBER_NAME_PART_MIN_LENGTH;
 export const MEMBER_FULL_NAME_MAX_LENGTH = 80;
 export const MEMBER_AGE_MIN = 0;
 export const MEMBER_AGE_MAX = 100;
+/** Age under this value is Categoría Menor (menor de 14 años). */
+export const MEMBER_MINOR_AGE_THRESHOLD = 14;
+
+export const MEMBER_AGE_CATEGORIES = {
+  ADULTO: "ADULTO",
+  MENOR: "MENOR",
+} as const;
+
+export type MemberAgeCategory = (typeof MEMBER_AGE_CATEGORIES)[keyof typeof MEMBER_AGE_CATEGORIES];
+
+export const MEMBER_AGE_CATEGORY_LABELS: Record<MemberAgeCategory, string> = {
+  [MEMBER_AGE_CATEGORIES.ADULTO]: "Adulto",
+  [MEMBER_AGE_CATEGORIES.MENOR]: "Menor",
+};
 
 /** Practical email check (aligned with common HTML5 / API expectations). */
 export const MEMBER_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function normalizeFullName(fullName: string): string {
-  return fullName.trim().replace(/\s+/g, " ");
+export function normalizeMemberNamePart(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
 }
 
-export function isValidMemberFullName(fullName: string): boolean {
-  const normalized = normalizeFullName(fullName);
+export function isValidMemberNamePart(value: string): boolean {
+  const normalized = normalizeMemberNamePart(value);
   return (
-    normalized.length >= MEMBER_FULL_NAME_MIN_LENGTH &&
-    normalized.length <= MEMBER_FULL_NAME_MAX_LENGTH
+    normalized.length >= MEMBER_NAME_PART_MIN_LENGTH &&
+    normalized.length <= MEMBER_NAME_PART_MAX_LENGTH
   );
+}
+
+export function formatMemberFullName(firstName: string, lastName: string): string {
+  return `${normalizeMemberNamePart(firstName)} ${normalizeMemberNamePart(lastName)}`.trim();
+}
+
+/** @deprecated Prefer normalizeMemberNamePart */
+export function normalizeFullName(fullName: string): string {
+  return normalizeMemberNamePart(fullName);
+}
+
+/** @deprecated Prefer isValidMemberNamePart */
+export function isValidMemberFullName(fullName: string): boolean {
+  const normalized = normalizeMemberNamePart(fullName);
+  return normalized.length >= MEMBER_NAME_PART_MIN_LENGTH && normalized.length <= 80;
 }
 
 export function normalizeMemberEmail(email: string): string {
@@ -118,8 +150,100 @@ export function isValidMemberEmail(email: string): boolean {
   return normalized.length > 0 && MEMBER_EMAIL_PATTERN.test(normalized);
 }
 
+/** ISO calendar date YYYY-MM-DD */
+export const MEMBER_BIRTH_DATE_ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** Argentine form date dd/mm/yyyy */
+export const MEMBER_BIRTH_DATE_DMY_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+
+function isRealCalendarDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
+}
+
+/** Normalize to ISO YYYY-MM-DD from ISO or dd/mm/yyyy. Returns null if invalid. */
+export function normalizeMemberBirthDate(value: string): string | null {
+  const trimmed = value.trim();
+  if (MEMBER_BIRTH_DATE_ISO_PATTERN.test(trimmed)) {
+    const [year, month, day] = trimmed.split("-").map(Number);
+    if (!isRealCalendarDate(year, month, day)) {
+      return null;
+    }
+    return trimmed;
+  }
+
+  const dmy = trimmed.match(MEMBER_BIRTH_DATE_DMY_PATTERN);
+  if (!dmy) {
+    return null;
+  }
+  const day = Number(dmy[1]);
+  const month = Number(dmy[2]);
+  const year = Number(dmy[3]);
+  if (!isRealCalendarDate(year, month, day)) {
+    return null;
+  }
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getMemberAge(birthDate: string | Date, asOf: Date = new Date()): number {
+  const iso =
+    typeof birthDate === "string"
+      ? normalizeMemberBirthDate(birthDate)
+      : `${birthDate.getUTCFullYear()}-${String(birthDate.getUTCMonth() + 1).padStart(2, "0")}-${String(birthDate.getUTCDate()).padStart(2, "0")}`;
+
+  if (!iso) {
+    return Number.NaN;
+  }
+
+  const [year, month, day] = iso.split("-").map(Number);
+  let age = asOf.getFullYear() - year;
+  const monthDiff = asOf.getMonth() + 1 - month;
+  const dayDiff = asOf.getDate() - day;
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age -= 1;
+  }
+  return age;
+}
+
+export function isValidMemberBirthDate(value: string, asOf: Date = new Date()): boolean {
+  const iso = normalizeMemberBirthDate(value);
+  if (!iso) {
+    return false;
+  }
+  const age = getMemberAge(iso, asOf);
+  return Number.isInteger(age) && age >= MEMBER_AGE_MIN && age <= MEMBER_AGE_MAX;
+}
+
+export function getMemberAgeCategory(age: number): MemberAgeCategory {
+  return age < MEMBER_MINOR_AGE_THRESHOLD
+    ? MEMBER_AGE_CATEGORIES.MENOR
+    : MEMBER_AGE_CATEGORIES.ADULTO;
+}
+
+export function getMemberAgeCategoryLabel(age: number): string {
+  return MEMBER_AGE_CATEGORY_LABELS[getMemberAgeCategory(age)];
+}
+
+/** @deprecated Prefer birthDate + getMemberAge. Kept for transitional checks. */
 export function isValidMemberAge(age: number): boolean {
   return Number.isInteger(age) && age >= MEMBER_AGE_MIN && age <= MEMBER_AGE_MAX;
+}
+
+/** Argentine DNI: 7–8 digits. Normalize by stripping non-digits (dots, spaces, dashes). */
+export const MEMBER_DNI_MIN_LENGTH = 7;
+export const MEMBER_DNI_MAX_LENGTH = 8;
+export const MEMBER_DNI_PATTERN = /^\d{7,8}$/;
+
+export function normalizeMemberDni(dni: string): string {
+  return dni.replace(/\D/g, "");
+}
+
+export function isValidMemberDni(dni: string): boolean {
+  return MEMBER_DNI_PATTERN.test(normalizeMemberDni(dni));
 }
 
 export const MEMBER_DELETE_REASONS = {

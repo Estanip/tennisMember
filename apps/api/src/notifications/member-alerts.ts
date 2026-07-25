@@ -25,9 +25,13 @@ export function buildNewMemberAlertContent(
     "Se registró un nuevo socio en el padrón.",
     "",
     `Origen: ${sourceLabel}`,
-    `Nombre: ${member.fullName}`,
+    `Nombre: ${member.firstName}`,
+    `Apellido: ${member.lastName}`,
     `Email: ${member.email}`,
+    `DNI: ${member.dni}`,
+    `Fecha de nacimiento: ${member.birthDate}`,
     `Edad: ${member.age}`,
+    `Categoría: ${member.ageCategory === "MENOR" ? "Menor" : "Adulto"}`,
     `Teléfono: ${member.phone ?? "—"}`,
     `Condición: ${conditionLabel}`,
     `Estado: ${statusLabel}`,
@@ -39,9 +43,13 @@ export function buildNewMemberAlertContent(
       <p>Se registró un nuevo socio en el padrón.</p>
       <ul>
         <li><strong>Origen:</strong> ${escapeHtml(sourceLabel)}</li>
-        <li><strong>Nombre:</strong> ${escapeHtml(member.fullName)}</li>
+        <li><strong>Nombre:</strong> ${escapeHtml(member.firstName)}</li>
+        <li><strong>Apellido:</strong> ${escapeHtml(member.lastName)}</li>
         <li><strong>Email:</strong> ${escapeHtml(member.email)}</li>
+        <li><strong>DNI:</strong> ${escapeHtml(member.dni)}</li>
+        <li><strong>Fecha de nacimiento:</strong> ${escapeHtml(member.birthDate)}</li>
         <li><strong>Edad:</strong> ${member.age}</li>
+        <li><strong>Categoría:</strong> ${member.ageCategory === "MENOR" ? "Menor" : "Adulto"}</li>
         <li><strong>Teléfono:</strong> ${escapeHtml(member.phone ?? "—")}</li>
         <li><strong>Condición:</strong> ${escapeHtml(conditionLabel)}</li>
         <li><strong>Estado:</strong> ${escapeHtml(statusLabel)}</li>

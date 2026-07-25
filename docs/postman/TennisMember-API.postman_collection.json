@@ -209,7 +209,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Juan Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"age\": 32,\n  \"phone\": \"2922440000\",\n  \"condition\": \"SOCIO_REGULAR\",\n  \"status\": 1\n}"
+              "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"dni\": \"30123456\",\n  \"birthDate\": \"1992-05-20\",\n  \"phone\": \"2922440000\",\n  \"condition\": \"SOCIO_REGULAR\",\n  \"status\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/members",
@@ -232,7 +232,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Juan Perez\",\n  \"age\": 33,\n  \"phone\": \"2922440001\",\n  \"condition\": \"ABONADO_TENIS\",\n  \"status\": 1\n}"
+              "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Perez\",\n  \"dni\": \"30123456\",\n  \"birthDate\": \"1992-05-20\",\n  \"phone\": \"2922440001\",\n  \"condition\": \"ABONADO_TENIS\",\n  \"status\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/members/{{memberId}}",
@@ -290,7 +290,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"aspirante@mail.com\",\n  \"fullName\": \"Aspirante Demo\",\n  \"age\": 28,\n  \"phone\": \"2922440000\"\n}"
+              "raw": "{\n  \"email\": \"aspirante@mail.com\",\n  \"firstName\": \"Aspirante\",\n  \"lastName\": \"Demo\",\n  \"dni\": \"28999111\",\n  \"birthDate\": \"15/03/1995\",\n  \"phone\": \"2922440000\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/webhooks/google-form",

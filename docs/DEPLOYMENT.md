@@ -83,7 +83,7 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 
 - Build: `yarn install --frozen-lockfile && yarn build:api`
 - Start: `yarn start:api`
-- Release: `yarn db:migrate:deploy`
+- Release: `yarn db:migrate:deploy` (corre automáticamente en cada deploy del service `api` vía `releaseCommand` en `railway.api.toml`)
 - Healthcheck: `/health`
 
 **web**
