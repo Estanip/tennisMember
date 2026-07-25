@@ -54,7 +54,8 @@ export function buildNewMemberAlertContent(
 }
 
 /**
- * Notifies ADMIN_ALERT_EMAIL. Failures are logged and do not throw.
+ * Notifies ADMIN_ALERT_EMAIL after member create.
+ * Failures are logged and do not throw — callers should not await if they want zero latency coupling.
  */
 export async function notifyAdminNewMember(
   member: Member,

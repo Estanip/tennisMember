@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI web alineada a CourtBook admin (paleta, tipografías, tema claro/oscuro/sistema)
 - Validaciones de socio: nombre 2–80, email válido, edad 0–100
 - Alerta por email al admin (`ADMIN_ALERT_EMAIL` / Resend) al crear socio (app o Google Form); fallo de mail no bloquea el alta
+- El alta no espera el envío del mail (fire-and-forget); Resend con timeout de 10s
 - Edición de socio: todos los campos editables excepto email
 - Soft delete con status `3` (Eliminado) + `deletedAt`; filtro y restablecer a Habilitado
 - Motivo de baja al eliminar: `FALTA_DE_PAGO` | `BAJA_DE_SOCIO` | `OTRA` (+ detalle obligatorio si Otra); se limpia al restablecer

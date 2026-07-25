@@ -121,7 +121,7 @@ export class MemberService {
         },
       });
       const dto = toMemberDto(restored);
-      await notifyAdminNewMember(dto, source);
+      void notifyAdminNewMember(dto, source);
       return dto;
     }
 
@@ -137,7 +137,7 @@ export class MemberService {
     });
 
     const dto = toMemberDto(member);
-    await notifyAdminNewMember(dto, source);
+    void notifyAdminNewMember(dto, source);
     return dto;
   }
 
