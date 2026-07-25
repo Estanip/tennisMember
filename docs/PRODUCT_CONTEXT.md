@@ -27,12 +27,12 @@ Cada socio pertenece al club y tiene las siguientes propiedades:
 
 | Propiedad          | Descripción                       | Reglas                                                         |
 | ------------------ | --------------------------------- | -------------------------------------------------------------- |
-| Nombre Completo    | Nombre y apellido del socio       | Obligatorio; editable                                          |
-| Email              | Identificador único del socio     | Obligatorio; único; **no editable** tras el alta               |
-| Edad               | Edad del socio (número)           | Obligatoria; editable                                          |
-| Número de teléfono | Contacto telefónico               | Opcional en alta manual; obligatorio en solicitudes Google Form |
+| Nombre Completo    | Nombre y apellido del socio       | Obligatorio; 2–80 caracteres; editable                                          |
+| Email              | Identificador único del socio     | Obligatorio; formato email válido; único; **no editable** tras el alta               |
+| Edad               | Edad del socio (número)           | Obligatoria; entero 0–100; editable                                          |
+| Número de teléfono | Contacto telefónico               | Opcional en alta manual; si se carga: exactamente 10 dígitos, sin 0 ni 15. Obligatorio en Google Form (misma regla) |
 | Condición          | Tipo de membresía                 | `Socio Regular` \| `Abonado Tenis`                             |
-| Estado             | Habilitación del socio en el club | DB: `0` No Habilitado · `1` Habilitado · `2` Pendiente         |
+| Estado             | Habilitación del socio en el club | DB: `0` No Habilitado · `1` Habilitado · `2` Pendiente · `3` Eliminado |
 
 ### Condición
 
@@ -44,10 +44,11 @@ Cada socio pertenece al club y tiene las siguientes propiedades:
 - **No Habilitado (`0`)**: el socio no está habilitado.
 - **Habilitado (`1`)**: el socio está activo / habilitado en el club.
 - **Pendiente (`2`)**: solicitud recibida (p. ej. Google Form); el admin debe revisar y aprobar/cambiar estado.
+- **Eliminado (`3`)**: baja lógica; se setea `deletedAt` y un motivo (`Falta de pago`, `Baja de socio` u `Otra` + detalle). Se puede **restablecer** → status `1`, `deletedAt = null` y se limpian motivo/detalle.
 
 ### Baja
 
-- Soft delete (`deletedAt`): el socio deja de aparecer en el padrón activo sin borrarse de la base.
+- Soft delete: `status = 3` + `deletedAt` + motivo obligatorio; el socio puede filtrarse como Eliminado y restablecerse.
 
 ## Google Form (solicitudes públicas)
 
@@ -77,6 +78,7 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 4. Edición de socios (todos los campos excepto el email) — solo ADMIN.
 5. Soft delete de socios — solo ADMIN.
 6. Alta automática desde Google Form en estado Pendiente (webhook).
+7. Alerta por email al administrador cuando se crea un socio (app o Google Form).
 
 ## Fuera de alcance (por ahora)
 

@@ -247,13 +247,22 @@
           "name": "Soft delete member",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"FALTA_DE_PAGO\",\n  \"detail\": null\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/members/{{memberId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "members", "{{memberId}}"]
             },
-            "description": "Soft delete de socio (solo ADMIN)."
+            "description": "Soft delete de socio (solo ADMIN). Motivos: FALTA_DE_PAGO | BAJA_DE_SOCIO | OTRA (detail obligatorio si OTRA)."
           },
           "response": []
         }

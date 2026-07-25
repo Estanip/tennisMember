@@ -17,6 +17,12 @@ enum MemberCondition {
   ABONADO_TENIS
 }
 
+enum MemberDeleteReason {
+  FALTA_DE_PAGO
+  BAJA_DE_SOCIO
+  OTRA
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -36,9 +42,13 @@ model Member {
   age       Int
   phone     String?
   condition MemberCondition
-  /// 0 = No Habilitado, 1 = Habilitado, 2 = Pendiente
+  /// 0 = No Habilitado, 1 = Habilitado, 2 = Pendiente, 3 = Eliminado
   status    Int
+  /// Soft delete timestamp; set together with status=3, cleared on restore
   deletedAt DateTime?
+  deletedReason MemberDeleteReason?
+  /// Required when deletedReason = OTRA
+  deletedReasonDetail String?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 

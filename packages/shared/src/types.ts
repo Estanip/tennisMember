@@ -1,4 +1,4 @@
-import type { MemberCondition, MemberStatus, UserRole } from "./constants.js";
+import type { MemberCondition, MemberDeleteReason, MemberStatus, UserRole } from "./constants.js";
 
 export interface ApiSuccessResponse<T = unknown> {
   success: true;
@@ -39,6 +39,8 @@ export interface Member {
   phone: string | null;
   condition: MemberCondition;
   status: MemberStatus;
+  deletedReason: MemberDeleteReason | null;
+  deletedReasonDetail: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +60,11 @@ export interface UpdateMemberRequest {
   phone?: string | null;
   condition?: MemberCondition;
   status?: MemberStatus;
+}
+
+export interface DeleteMemberRequest {
+  reason: MemberDeleteReason;
+  detail?: string | null;
 }
 
 export interface MemberListQuery {

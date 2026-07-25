@@ -1,4 +1,9 @@
-import { MEMBER_CONDITIONS, MEMBER_STATUS_VALUES } from "@socios/shared";
+import {
+  MEMBER_CONDITIONS,
+  MEMBER_DELETE_REASON_VALUES,
+  MEMBER_EDITABLE_STATUS_VALUES,
+  MEMBER_STATUS_VALUES,
+} from "@socios/shared";
 import type { FastifyInstance } from "fastify";
 import { MemberService } from "./member.service.js";
 
@@ -12,6 +17,8 @@ const memberSchema = {
     "phone",
     "condition",
     "status",
+    "deletedReason",
+    "deletedReasonDetail",
     "createdAt",
     "updatedAt",
   ],
@@ -27,6 +34,11 @@ const memberSchema = {
       enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
     },
     status: { type: "integer", enum: [...MEMBER_STATUS_VALUES] },
+    deletedReason: {
+      type: ["string", "null"],
+      enum: [...MEMBER_DELETE_REASON_VALUES, null],
+    },
+    deletedReasonDetail: { type: ["string", "null"] },
     createdAt: { type: "string" },
     updatedAt: { type: "string" },
   },
@@ -48,15 +60,21 @@ const createBodySchema = {
   required: ["fullName", "email", "age", "condition", "status"],
   additionalProperties: false,
   properties: {
-    fullName: { type: "string", minLength: 1 },
-    email: { type: "string", format: "email" },
-    age: { type: "integer", minimum: 0, maximum: 120 },
-    phone: { type: ["string", "null"] },
+    fullName: { type: "string", minLength: 2, maxLength: 80 },
+    email: { type: "string", format: "email", maxLength: 254 },
+    age: { type: "integer", minimum: 0, maximum: 100 },
+    phone: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", pattern: "^\\d{10}$" },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     condition: {
       type: "string",
       enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
     },
-    status: { type: "integer", enum: [...MEMBER_STATUS_VALUES] },
+    status: { type: "integer", enum: [...MEMBER_EDITABLE_STATUS_VALUES] },
   },
 } as const;
 
@@ -64,14 +82,39 @@ const updateBodySchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    fullName: { type: "string", minLength: 1 },
-    age: { type: "integer", minimum: 0, maximum: 120 },
-    phone: { type: ["string", "null"] },
+    fullName: { type: "string", minLength: 2, maxLength: 80 },
+    age: { type: "integer", minimum: 0, maximum: 100 },
+    phone: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", pattern: "^\\d{10}$" },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     condition: {
       type: "string",
       enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
     },
-    status: { type: "integer", enum: [...MEMBER_STATUS_VALUES] },
+    status: { type: "integer", enum: [...MEMBER_EDITABLE_STATUS_VALUES] },
+  },
+} as const;
+
+const deleteBodySchema = {
+  type: "object",
+  required: ["reason"],
+  additionalProperties: false,
+  properties: {
+    reason: {
+      type: "string",
+      enum: [...MEMBER_DELETE_REASON_VALUES],
+    },
+    detail: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", maxLength: 500 },
+        { type: "string", maxLength: 0 },
+      ],
+    },
   },
 } as const;
 
@@ -263,7 +306,48 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
       preHandler: [app.requireAdmin],
       schema: {
         tags: ["Members"],
-        summary: "Soft delete member (ADMIN)",
+        summary: "Soft delete member with reason (ADMIN)",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["id"],
+          additionalProperties: false,
+          properties: {
+            id: { type: "string" },
+          },
+        },
+        body: deleteBodySchema,
+        response: {
+          200: {
+            type: "object",
+            required: ["success", "message"],
+            additionalProperties: false,
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      await memberService.softDelete(id, request.body as never);
+      return reply.send({ success: true, message: "Member deleted" });
+    },
+  );
+
+  app.post(
+    "/members/:id/restore",
+    {
+      preHandler: [app.requireAdmin],
+      schema: {
+        tags: ["Members"],
+        summary: "Restore soft-deleted member (ADMIN) — status Enabled, clear deletedAt",
         security: [{ bearerAuth: [] }],
         params: {
           type: "object",
@@ -276,11 +360,12 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
         response: {
           200: {
             type: "object",
-            required: ["success", "message"],
+            required: ["success", "data"],
             additionalProperties: false,
             properties: {
               success: { type: "boolean" },
               message: { type: "string" },
+              data: memberSchema,
             },
           },
           401: errorResponseSchema,
@@ -291,8 +376,8 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      await memberService.softDelete(id);
-      return reply.send({ success: true, message: "Member deleted" });
+      const data = await memberService.restore(id);
+      return reply.send({ success: true, data, message: "Member restored" });
     },
   );
 }

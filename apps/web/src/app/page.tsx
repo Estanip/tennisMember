@@ -40,8 +40,9 @@ export default function LoginPage() {
       </div>
       <section className="card login-card stack">
         <div>
-          <h1>Socios Backoffice</h1>
-          <p className="muted">Iniciá sesión para gestionar el padrón</p>
+          <p className="login-brand">Socios</p>
+          <p className="login-kicker">Backoffice</p>
+          <p className="login-lead">Iniciá sesión para gestionar el padrón</p>
         </div>
         <form className="stack" onSubmit={onSubmit}>
           <div className="field">

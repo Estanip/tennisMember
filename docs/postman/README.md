@@ -50,7 +50,7 @@ Collection y environments para probar la API (`apps/api`).
 | `GET` | `/api/members/:id` | Bearer |
 | `POST` | `/api/members` | Bearer + ADMIN |
 | `PATCH` | `/api/members/:id` | Bearer + ADMIN |
-| `DELETE` | `/api/members/:id` | Bearer + ADMIN |
+| `DELETE` | `/api/members/:id` | Bearer + ADMIN · body `{ reason, detail? }` |
 | `POST` | `/api/webhooks/google-form` | `X-Webhook-Secret` |
 
 Alternativa interactiva en local: Swagger en `http://localhost:3003/docs`.

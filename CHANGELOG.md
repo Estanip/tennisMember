@@ -23,3 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI GitHub Actions (lint, typecheck, build) y configs Railway test (`railway.api.toml`, `railway.web.toml`)
 - Guía de deploy test en Railway (`docs/DEPLOYMENT.md`)
 - Modo claro / oscuro en el backoffice web (preferencia en `localStorage`)
+- Paleta primary/badges/acentos en azul `#2B7FFF` (claro y oscuro)
+- Teléfono de socio opcional; si se informa, exactamente 10 dígitos (sin 0 ni 15)
+- UI web alineada a CourtBook admin (paleta, tipografías, tema claro/oscuro/sistema)
+- Validaciones de socio: nombre 2–80, email válido, edad 0–100
+- Alerta por email al admin (`ADMIN_ALERT_EMAIL` / Resend) al crear socio (app o Google Form); fallo de mail no bloquea el alta
+- Edición de socio: todos los campos editables excepto email
+- Soft delete con status `3` (Eliminado) + `deletedAt`; filtro y restablecer a Habilitado
+- Motivo de baja al eliminar: `FALTA_DE_PAGO` | `BAJA_DE_SOCIO` | `OTRA` (+ detalle obligatorio si Otra); se limpia al restablecer

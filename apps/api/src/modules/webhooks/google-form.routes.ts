@@ -19,10 +19,10 @@ const webhookBodySchema = {
   required: ["email", "fullName", "age", "phone"],
   additionalProperties: false,
   properties: {
-    email: { type: "string", format: "email" },
-    fullName: { type: "string", minLength: 1 },
-    age: { type: "integer", minimum: 0, maximum: 120 },
-    phone: { type: "string", minLength: 1 },
+    email: { type: "string", format: "email", maxLength: 254 },
+    fullName: { type: "string", minLength: 2, maxLength: 80 },
+    age: { type: "integer", minimum: 0, maximum: 100 },
+    phone: { type: "string", pattern: "^\\d{10}$" },
   },
 } as const;
 
@@ -52,7 +52,12 @@ const memberSchema = {
     },
     status: {
       type: "integer",
-      enum: [MEMBER_STATUS.DISABLED, MEMBER_STATUS.ENABLED, MEMBER_STATUS.PENDING],
+      enum: [
+        MEMBER_STATUS.DISABLED,
+        MEMBER_STATUS.ENABLED,
+        MEMBER_STATUS.PENDING,
+        MEMBER_STATUS.DELETED,
+      ],
     },
     createdAt: { type: "string" },
     updatedAt: { type: "string" },

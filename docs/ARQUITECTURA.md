@@ -25,7 +25,7 @@ packages/
 
 - El frontend no accede a la DB; solo habla con la API vía `apiClient`.
 - El backend es la fuente de verdad de permisos (`authenticate` / `requireAdmin`).
-- Soft delete de socios en dominio de persistencia; el listado activo excluye `deletedAt != null`.
+- Soft delete de socios: `status = 3` + `deletedAt` + motivo (`deletedReason` / `deletedReasonDetail`); listado filtrable; restore limpia motivo y `deletedAt` y pone status `1`.
 
 ## Referencias
 

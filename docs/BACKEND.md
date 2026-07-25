@@ -42,7 +42,7 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `POST /api/auth/login`, `GET /api/auth/me`
 - `GET /api/members` (search, filtros, paginación) — autenticado
 - `GET /api/members/:id` — autenticado
-- `POST|PATCH|DELETE /api/members` — solo `ADMIN` (DELETE = soft delete)
+- `POST|PATCH|DELETE /api/members` — solo `ADMIN` (DELETE = soft delete con motivo)
 - `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea Abonado Tenis en estado Pendiente
 
 Integración Google Form: `docs/GOOGLE_FORM.md`.

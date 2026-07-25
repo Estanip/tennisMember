@@ -20,8 +20,9 @@ Plantilla: `apps/web/.env.example`.
 
 ## UI
 
-- Estilo: limpio y funcional (sin brand obligatorio en el MVP).
-- Temas **claro** / **oscuro** (`data-theme` + `localStorage`); toggle en login y topbar.
+- Estilo alineado visualmente con CourtBook admin (tokens stone + accent `#2B7FFF`, tipografía DM Sans / Source Serif 4).
+- CSS propio (sin Tailwind); clases semánticas en `globals.css`.
+- Temas **claro** / **oscuro** / **sistema** (`localStorage`); toggle en login y topbar.
 - Pantallas MVP:
   - Login
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)

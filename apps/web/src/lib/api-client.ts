@@ -2,6 +2,7 @@ import type {
   ApiResponse,
   AuthUser,
   CreateMemberRequest,
+  DeleteMemberRequest,
   LoginRequest,
   LoginResponse,
   Member,
@@ -80,9 +81,16 @@ class ApiClient {
     });
   }
 
-  async deleteMember(id: string): Promise<void> {
+  async deleteMember(id: string, payload: DeleteMemberRequest): Promise<void> {
     await this.request<undefined>(`/members/${id}`, {
       method: "DELETE",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async restoreMember(id: string): Promise<Member> {
+    return this.request<Member>(`/members/${id}/restore`, {
+      method: "POST",
     });
   }
 

@@ -22,13 +22,16 @@ export class GoogleFormWebhookService {
       throw new AppError("Phone is required for Google Form submissions", 400, "PHONE_REQUIRED");
     }
 
-    return this.members.create({
-      fullName: payload.fullName,
-      email: payload.email,
-      age: payload.age,
-      phone,
-      condition: MEMBER_CONDITIONS.ABONADO_TENIS,
-      status: MEMBER_STATUS.PENDING,
-    });
+    return this.members.create(
+      {
+        fullName: payload.fullName,
+        email: payload.email,
+        age: payload.age,
+        phone,
+        condition: MEMBER_CONDITIONS.ABONADO_TENIS,
+        status: MEMBER_STATUS.PENDING,
+      },
+      { source: "GOOGLE_FORM" },
+    );
   }
 }
