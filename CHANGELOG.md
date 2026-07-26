@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Railway: builder `NIXPACKS` → `RAILPACK` en `railway.api.toml` y `railway.web.toml`
+- Railway: `YARN_PRODUCTION=false` en build para no omitir `devDependencies` bajo `NODE_ENV=production`
+- API: `typescript` y `@types/node` pasan a `dependencies` (necesarios para `tsc` en Railway)
+- API: logs de errores Prisma/Postgres más explícitos (código, tabla/columna, hint; p. ej. P2022)
+
 ### Added
 
 - Monorepo inicial (`apps/api`, `apps/web`, `packages/shared`)

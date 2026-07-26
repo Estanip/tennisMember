@@ -69,6 +69,13 @@ Repo: `Estanip/tennisMember` (privado).
 
 Root Directory de ambos services de app: `/` (raíz del monorepo).
 
+Builder: **Railpack** (`builder = "RAILPACK"` en los toml). Nixpacks está deprecado en Railway.
+
+Build: los `buildCommand` usan `YARN_PRODUCTION=false` para instalar `devDependencies`
+(`typescript`, `@types/node`, etc.). Sin eso, con `NODE_ENV=production` Yarn las omite y
+falla el `tsc` / build de Next; si el build falla, Railway **no** corre `releaseCommand`
+(migraciones) y sigue la imagen anterior.
+
 ### Config files
 
 | Service | Archivo en el repo |
@@ -81,14 +88,14 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 
 **api**
 
-- Build: `yarn install --frozen-lockfile && yarn build:api`
+- Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api`
 - Start: `yarn start:api`
 - Release: `yarn db:migrate:deploy` (corre automáticamente en cada deploy del service `api` vía `releaseCommand` en `railway.api.toml`)
 - Healthcheck: `/health`
 
 **web**
 
-- Build: `yarn install --frozen-lockfile && yarn build:web`
+- Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:web`
 - Start: `yarn start:web`
 - Healthcheck: `/`
 

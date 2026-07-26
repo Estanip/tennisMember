@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { isAppError } from "../lib/errors.js";
@@ -34,6 +35,9 @@ function getErrorCode(error: unknown): string {
   if (isAppError(error)) {
     return error.code;
   }
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code;
+  }
   if (typeof error === "object" && error !== null && "code" in error) {
     const code = (error as FastifyError).code;
     if (typeof code === "string") {
@@ -43,16 +47,99 @@ function getErrorCode(error: unknown): string {
   return "INTERNAL_SERVER_ERROR";
 }
 
+function describePrismaError(error: unknown): {
+  logMessage: string;
+  persistMessage: string;
+  prisma?: Record<string, unknown>;
+} | null {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    const meta = (error.meta ?? {}) as Record<string, unknown>;
+    const column = typeof meta.column === "string" ? meta.column : undefined;
+    const table = typeof meta.table === "string" ? meta.table : undefined;
+    const modelName = typeof meta.modelName === "string" ? meta.modelName : undefined;
+    const target = meta.target;
+
+    const hints: Record<string, string> = {
+      P2021: "Table does not exist in the database (pending migrations?)",
+      P2022: "Column does not exist in the database (pending migrations / schema drift)",
+      P2002: "Unique constraint violation",
+      P2003: "Foreign key constraint violation",
+      P2014: "Required relation violation",
+      P2025: "Record not found",
+    };
+
+    const hint = hints[error.code] ?? "Prisma known request error";
+    const parts = [
+      `Prisma ${error.code}: ${hint}`,
+      modelName ? `model=${modelName}` : null,
+      table ? `table=${table}` : null,
+      column ? `column=${column}` : null,
+      target !== undefined ? `target=${JSON.stringify(target)}` : null,
+    ].filter((part): part is string => part !== null);
+
+    return {
+      logMessage: parts.join(" | "),
+      persistMessage: `${parts.join(" | ")} — ${error.message}`,
+      prisma: {
+        code: error.code,
+        meta,
+        clientVersion: error.clientVersion,
+      },
+    };
+  }
+
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    return {
+      logMessage: "Prisma validation error (query args do not match schema)",
+      persistMessage: error.message,
+      prisma: { kind: "validation" },
+    };
+  }
+
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return {
+      logMessage: `Prisma initialization error${error.errorCode ? ` (${error.errorCode})` : ""}`,
+      persistMessage: error.message,
+      prisma: {
+        kind: "initialization",
+        errorCode: error.errorCode,
+        clientVersion: error.clientVersion,
+      },
+    };
+  }
+
+  if (error instanceof Prisma.PrismaClientRustPanicError) {
+    return {
+      logMessage: "Prisma engine panic",
+      persistMessage: error.message,
+      prisma: { kind: "panic" },
+    };
+  }
+
+  if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+    return {
+      logMessage: "Prisma unknown request error",
+      persistMessage: error.message,
+      prisma: { kind: "unknown_request", clientVersion: error.clientVersion },
+    };
+  }
+
+  return null;
+}
+
 async function errorLoggerPlugin(fastify: import("fastify").FastifyInstance): Promise<void> {
   fastify.setErrorHandler(async (error, request, reply) => {
     const statusCode = getStatusCode(error);
     const message = getErrorMessage(error);
+    const prismaInfo = describePrismaError(error);
+    const persistMessage = prismaInfo?.persistMessage ?? message;
+    const logMessage = prismaInfo?.logMessage ?? message;
 
     if (statusCode >= 500) {
       await prisma.errorLog
         .create({
           data: {
-            message,
+            message: persistMessage,
             stack: getErrorStack(error),
             path: request.url,
             method: request.method,
@@ -73,8 +160,9 @@ async function errorLoggerPlugin(fastify: import("fastify").FastifyInstance): Pr
           path: request.url,
           method: request.method,
           statusCode,
+          ...(prismaInfo?.prisma ? { prisma: prismaInfo.prisma } : {}),
         },
-        message,
+        logMessage,
       );
     } else {
       request.log.warn(
@@ -83,8 +171,9 @@ async function errorLoggerPlugin(fastify: import("fastify").FastifyInstance): Pr
           path: request.url,
           method: request.method,
           statusCode,
+          ...(prismaInfo?.prisma ? { prisma: prismaInfo.prisma } : {}),
         },
-        message,
+        logMessage,
       );
     }
 

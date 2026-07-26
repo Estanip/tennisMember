@@ -3,8 +3,10 @@
 # and point Config File to this path, OR paste the commands manually.
 
 [build]
-builder = "NIXPACKS"
-buildCommand = "yarn install --frozen-lockfile && yarn build:api"
+builder = "RAILPACK"
+# YARN_PRODUCTION=false: NODE_ENV=production en Railway omite devDependencies
+# (@types/node, typescript) y rompe `tsc` en el build.
+buildCommand = "YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api"
 
 [deploy]
 startCommand = "yarn start:api"

@@ -5,8 +5,10 @@
 # Required variable at BUILD time: NEXT_PUBLIC_API_URL=https://<api-public-url>/api
 
 [build]
-builder = "NIXPACKS"
-buildCommand = "yarn install --frozen-lockfile && yarn build:web"
+builder = "RAILPACK"
+# YARN_PRODUCTION=false: NODE_ENV=production en Railway omite devDependencies
+# necesarias para el build de Next/TypeScript.
+buildCommand = "YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:web"
 
 [deploy]
 startCommand = "yarn start:web"
