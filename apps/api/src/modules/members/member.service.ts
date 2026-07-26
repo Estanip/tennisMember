@@ -25,6 +25,7 @@ import {
   normalizeOptionalPhone,
 } from "@socios/shared";
 import { AppError } from "../../lib/errors.js";
+import { getLogger } from "../../lib/logger.js";
 import { toMemberDto } from "../../lib/mappers.js";
 import { prisma } from "../../lib/prisma.js";
 import {
@@ -35,6 +36,8 @@ import {
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
+
+const log = getLogger("members");
 
 export class MemberService {
   async list(query: MemberListQuery): Promise<PaginatedMembers> {
@@ -76,6 +79,18 @@ export class MemberService {
       }),
     ]);
 
+    log.debug(
+      {
+        page,
+        pageSize,
+        total,
+        search: query.search?.trim() || undefined,
+        condition: query.condition,
+        status: query.status,
+      },
+      "Listed members",
+    );
+
     return {
       items: items.map(toMemberDto),
       total,
@@ -91,9 +106,11 @@ export class MemberService {
     });
 
     if (!member) {
+      log.warn({ memberId: id }, "Member not found");
       throw new AppError("Member not found", 404, "MEMBER_NOT_FOUND");
     }
 
+    log.debug({ memberId: id }, "Fetched member by id");
     return toMemberDto(member);
   }
 
@@ -111,6 +128,7 @@ export class MemberService {
     });
 
     if (existingByEmail && !existingByEmail.deletedAt) {
+      log.warn({ email, source }, "Create member rejected: email taken");
       throw new AppError("Email already in use", 409, "EMAIL_TAKEN");
     }
 
@@ -119,6 +137,7 @@ export class MemberService {
     });
 
     if (existingByDni && existingByDni.id !== existingByEmail?.id) {
+      log.warn({ dni, source }, "Create member rejected: DNI taken");
       throw new AppError("DNI already in use", 409, "DNI_TAKEN");
     }
 
@@ -139,6 +158,10 @@ export class MemberService {
         },
       });
       const dto = toMemberDto(restored);
+      log.info(
+        { memberId: dto.id, email, dni, source, restored: true },
+        "Member restored via create (previously deleted)",
+      );
       void notifyAdminNewMember(dto, source);
       return dto;
     }
@@ -157,6 +180,10 @@ export class MemberService {
     });
 
     const dto = toMemberDto(member);
+    log.info(
+      { memberId: dto.id, email, dni, source, status: dto.status, condition: dto.condition },
+      "Member created",
+    );
     void notifyAdminNewMember(dto, source);
     return dto;
   }
@@ -167,6 +194,7 @@ export class MemberService {
     });
 
     if (!member) {
+      log.warn({ memberId: id }, "Update failed: member not found");
       throw new AppError("Member not found", 404, "MEMBER_NOT_FOUND");
     }
 
@@ -181,6 +209,7 @@ export class MemberService {
         where: { dni, NOT: { id } },
       });
       if (taken) {
+        log.warn({ memberId: id, dni }, "Update rejected: DNI taken");
         throw new AppError("DNI already in use", 409, "DNI_TAKEN");
       }
     }
@@ -207,13 +236,19 @@ export class MemberService {
       },
     });
 
-    return toMemberDto(updated);
+    const dto = toMemberDto(updated);
+    log.info(
+      { memberId: id, status: dto.status, condition: dto.condition, fields: Object.keys(input) },
+      "Member updated",
+    );
+    return dto;
   }
 
   async softDelete(id: string, input: DeleteMemberRequest): Promise<void> {
     const member = await prisma.member.findUnique({ where: { id } });
 
     if (!member || member.status === MEMBER_STATUS.DELETED || member.deletedAt !== null) {
+      log.warn({ memberId: id }, "Soft delete failed: member not found or already deleted");
       throw new AppError("Member not found", 404, "MEMBER_NOT_FOUND");
     }
 
@@ -241,12 +276,15 @@ export class MemberService {
         deletedReasonDetail: input.reason === MEMBER_DELETE_REASONS.OTRA ? detail : detail || null,
       },
     });
+
+    log.info({ memberId: id, reason: input.reason }, "Member soft-deleted");
   }
 
   async restore(id: string) {
     const member = await prisma.member.findUnique({ where: { id } });
 
     if (!member || (member.status !== MEMBER_STATUS.DELETED && member.deletedAt === null)) {
+      log.warn({ memberId: id }, "Restore failed: deleted member not found");
       throw new AppError("Deleted member not found", 404, "MEMBER_NOT_FOUND");
     }
 
@@ -260,7 +298,9 @@ export class MemberService {
       },
     });
 
-    return toMemberDto(restored);
+    const dto = toMemberDto(restored);
+    log.info({ memberId: id }, "Member restored");
+    return dto;
   }
 
   private assertValidStatus(status: number): void {

@@ -102,6 +102,8 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 | `GOOGLE_FORM_WEBHOOK_SECRET` | Secret de test; actualizar Apps Script |
 | `HOST` | `0.0.0.0` |
 | `NODE_ENV` | `production` |
+| `LOG_LEVEL` | `info` (o `debug` temporalmente) |
+| `LOG_PRETTY` | `false` en Railway (JSON para agregadores) |
 | `ADMIN_ALERT_EMAIL` | Destino de alertas (nuevo socio) |
 | `EMAIL_PROVIDER` | `resend` (o `console` para logs) |
 | `EMAIL_FROM` | Remitente verificado en Resend |

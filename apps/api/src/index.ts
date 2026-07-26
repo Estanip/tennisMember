@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { buildApp } from "./app.js";
+import { getLogger } from "./lib/logger.js";
 
 async function main(): Promise<void> {
   const app = await buildApp();
@@ -8,8 +9,9 @@ async function main(): Promise<void> {
 
   try {
     await app.listen({ port, host });
+    app.log.info({ port, host }, "API listening");
   } catch (error) {
-    app.log.error(error);
+    getLogger().error({ err: error }, "Failed to start API");
     process.exit(1);
   }
 }

@@ -1,8 +1,11 @@
 import type { Member } from "@socios/shared";
 import { MEMBER_CONDITION_LABELS, MEMBER_STATUS_LABELS } from "@socios/shared";
+import { getLogger } from "../lib/logger.js";
 import { getEmailProvider } from "./email/factory.js";
 
 export type MemberCreatedSource = "APP" | "GOOGLE_FORM";
+
+const log = getLogger("email");
 
 function escapeHtml(value: string): string {
   return value
@@ -71,7 +74,7 @@ export async function notifyAdminNewMember(
 ): Promise<void> {
   const to = process.env.ADMIN_ALERT_EMAIL?.trim();
   if (!to) {
-    console.warn("[socios:email] ADMIN_ALERT_EMAIL is not set; skipping new-member alert");
+    log.warn("ADMIN_ALERT_EMAIL is not set; skipping new-member alert");
     return;
   }
 
@@ -79,8 +82,8 @@ export async function notifyAdminNewMember(
 
   try {
     await getEmailProvider().send({ to, ...content });
+    log.info({ to, source, memberId: member.id }, "New-member alert sent");
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "unknown";
-    console.error(`[socios:email] Failed to send new-member alert to ${to}: ${detail}`);
+    log.error({ err: error, to, source, memberId: member.id }, "Failed to send new-member alert");
   }
 }

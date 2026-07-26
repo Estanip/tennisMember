@@ -4,6 +4,7 @@ import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
+import { createRootLogger } from "./lib/logger.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { memberRoutes } from "./modules/members/member.routes.js";
 import { googleFormWebhookRoutes } from "./modules/webhooks/google-form.routes.js";
@@ -11,8 +12,9 @@ import authPlugin from "./plugins/auth.js";
 import errorHandlerPlugin, { notFoundHandler } from "./plugins/error-handler.js";
 
 export async function buildApp() {
+  const logger = createRootLogger();
   const app = Fastify({
-    logger: true,
+    loggerInstance: logger,
   });
 
   await app.register(cors, {

@@ -66,6 +66,26 @@ async function errorLoggerPlugin(fastify: import("fastify").FastifyInstance): Pr
         .catch((logError: unknown) => {
           request.log.error({ err: logError }, "Failed to persist error log");
         });
+
+      request.log.error(
+        {
+          err: error,
+          path: request.url,
+          method: request.method,
+          statusCode,
+        },
+        message,
+      );
+    } else {
+      request.log.warn(
+        {
+          err: error,
+          path: request.url,
+          method: request.method,
+          statusCode,
+        },
+        message,
+      );
     }
 
     return reply.status(statusCode).send({
@@ -79,6 +99,7 @@ async function errorLoggerPlugin(fastify: import("fastify").FastifyInstance): Pr
 export default fp(errorLoggerPlugin);
 
 export async function notFoundHandler(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  request.log.debug({ path: request.url, method: request.method }, "Route not found");
   await reply.status(404).send({
     success: false,
     error: "NOT_FOUND",

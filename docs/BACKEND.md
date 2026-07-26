@@ -25,9 +25,20 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 - `@fastify/rate-limit`: máx. **100** requests / **15** minutos.
 
+## Logging
+
+- Librería: **Pino** (integrada con Fastify).
+- Niveles: `fatal` | `error` | `warn` | `info` | `debug` | `trace` vía `LOG_LEVEL`.
+- Formato:
+  - `LOG_PRETTY=true` (default local): salida coloreada con emoji por nivel.
+  - `LOG_PRETTY=false` (default en `production`): **JSON por línea** (Grafana Loki, Better Stack, Elastic).
+- Campos base: `service`, `env`, `level`, `time` (ISO), `msg`, `emoji`, y bindings (`module`, `req`, `err`, etc.).
+- Helper: `getLogger("module")` en `apps/api/src/lib/logger.ts`.
+- Secrets redactados: `Authorization`, `X-Webhook-Secret`.
+
 ## Errores
 
-- Error handler global.
+- Error handler global (4xx → `warn`, 5xx → `error` + persistencia).
 - Errores 5xx persistidos en tabla `ErrorLog`.
 
 ## Prisma
