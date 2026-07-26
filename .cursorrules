@@ -8,7 +8,7 @@ Las reglas específicas del producto viven en los documentos referenciados abajo
 1. **Análisis**: Lee el contexto del producto y los docs relevantes al cambio (stack, arquitectura, backend/frontend, modelos, deployment).
 2. **Planificación**: Presenta un PLAN DE ACCIÓN detallado.
 3. **Aprobación**: ESPERA confirmación explícita (`PROCEDE`) antes de editar cualquier archivo.
-4. **Verificación**: Ejecuta las validaciones de calidad del proyecto antes de finalizar (format, lint, typecheck).
+4. **Verificación**: Ejecuta las validaciones de calidad del proyecto antes de finalizar (ver cierre de tarea y checklist pre-push).
 
 ## 🧹 CALIDAD DE CÓDIGO (GENÉRICO)
 
@@ -20,10 +20,16 @@ Las reglas específicas del producto viven en los documentos referenciados abajo
 
 ## 📄 CIERRE DE TAREA (GENÉRICO)
 
-1. **Validación**: format → lint → typecheck; corregir errores antes de continuar.
+1. **Validación local (obligatoria antes de decir “listo” o pedir/subir commit)**:
+   - Correr el mismo flujo que CI: `yarn lint` → `yarn typecheck` → `yarn build` (con `DATABASE_URL` dummy si hace falta para Prisma y `NEXT_PUBLIC_API_URL` para el build web).
+   - Si el cambio afecta deploy (Railway, migraciones, `railway.*.toml`, scripts de build/start/release, deps de build): revisar también `docs/DEPLOYMENT.md` y confirmar que el build/pre-deploy de API/Web seguirían OK (p. ej. `YARN_PRODUCTION=false`, `preDeployCommand` / migraciones; no usar `releaseCommand`, no existe en Railway).
+   - **No** pushear ni afirmar que CI/deploy van a pasar sin haber corrido esa validación (o sin reportar explícitamente qué no se pudo correr y por qué).
 2. **Documentar**: actualizar `CHANGELOG.md` (Keep a Changelog) cuando el cambio sea relevante.
 3. **Commit**: Conventional Commits (scope opcional). Solo crear commits si el usuario lo pide.
-4. **NO** incluir metadatos de IA ni co-autoría de Cursor.
+4. **Sin co-autoría de IA**:
+   - **NUNCA** agregar `Co-authored-by: Cursor` ni ningún trailer/metadata de Cursor, Copilot u otra IA.
+   - No usar `git commit --trailer` para co-autores de herramientas.
+   - Si el entorno inyecta co-autoría automáticamente, el mensaje de commit debe quedar **solo** con el texto Conventional Commit del cambio (sin trailers de IA). Reintentar el commit sin trailers si hace falta.
 
 ## 📚 CONTEXTO ESPECÍFICO DEL PROYECTO
 

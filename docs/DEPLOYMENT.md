@@ -58,6 +58,19 @@ Workflow: `.github/workflows/ci.yml`
 - `typecheck` / `build` generan `@socios/shared` y el Prisma Client antes de `tsc`
 - Deploy: **no** está en Actions; Railway despliega al conectar el repo en el dashboard
 
+### Checklist pre-push (agente y humanos)
+
+Antes de pushear a `main`/`master` (o de afirmar que CI/deploy van a pasar):
+
+1. `yarn lint`
+2. `yarn typecheck` (requiere poder correr `prisma generate`; en CI se usa un `DATABASE_URL` dummy)
+3. `yarn build` con `NEXT_PUBLIC_API_URL` definida (como en CI)
+4. Si tocaste Railway / migraciones / scripts de build:
+   - Revisar `railway.api.toml` / `railway.web.toml` (builder Railpack, `YARN_PRODUCTION=false`, `preDeployCommand` de migraciones en API)
+   - Confirmar que un deploy fallido **no** aplica migraciones y deja la imagen anterior
+
+Commits: Conventional Commits; **sin** `Co-authored-by` de Cursor u otras IAs (ver `.cursorrules`).
+
 ## Railway (ambiente test)
 
 Repo: `Estanip/tennisMember` (privado).
@@ -74,8 +87,12 @@ Builder: **Railpack** (`builder = "RAILPACK"` en los toml). Nixpacks está depre
 
 Build: los `buildCommand` usan `YARN_PRODUCTION=false` para instalar `devDependencies`
 (`typescript`, `@types/node`, etc.). Sin eso, con `NODE_ENV=production` Yarn las omite y
-falla el `tsc` / build de Next; si el build falla, Railway **no** corre `releaseCommand`
+falla el `tsc` / build de Next; si el build falla, Railway **no** corre `preDeployCommand`
 (migraciones) y sigue la imagen anterior.
+
+Migraciones API: usar **`preDeployCommand`** (campo válido en el schema de Railway).
+`releaseCommand` **no existe** y se ignora. Además `startCommand` corre
+`yarn db:migrate:deploy` antes de arrancar (idempotente) como red de seguridad.
 
 ### Config files
 
@@ -90,8 +107,8 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 **api**
 
 - Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api`
-- Start: `yarn start:api`
-- Release: `yarn db:migrate:deploy` (corre automáticamente en cada deploy del service `api` vía `releaseCommand` en `railway.api.toml`)
+- Pre-deploy: `yarn db:migrate:deploy` (`preDeployCommand` en `railway.api.toml`)
+- Start: `yarn db:migrate:deploy && yarn start:api`
 - Healthcheck: `/health`
 
 **web**

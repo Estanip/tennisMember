@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API: `typescript` y `@types/node` pasan a `dependencies` (necesarios para `tsc` en Railway)
 - API: logs de errores Prisma/Postgres más explícitos (código, tabla/columna, hint; p. ej. P2022)
 - CI/`yarn typecheck` y `yarn build`: generan `@socios/shared` + Prisma Client antes de `tsc`
+- Protocolo del agente: validar lint/typecheck/build (y impacto Railway) antes de pushear; commits sin co-autoría de IA
+- Railway API: `releaseCommand` (inválido) → `preDeployCommand` + migrate en `startCommand` para aplicar schema (fix P2022)
 
 ### Added
 

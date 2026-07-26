@@ -9,8 +9,10 @@ builder = "RAILPACK"
 buildCommand = "YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api"
 
 [deploy]
-startCommand = "yarn start:api"
-releaseCommand = "yarn db:migrate:deploy"
+# Migraciones: el schema de Railway usa preDeployCommand (releaseCommand no existe y se ignora).
+# startCommand también corre migrate deploy (idempotente) por si el pre-deploy no está cableado.
+preDeployCommand = "yarn db:migrate:deploy"
+startCommand = "yarn db:migrate:deploy && yarn start:api"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
