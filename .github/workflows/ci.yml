@@ -35,8 +35,12 @@ jobs:
 
       - name: Typecheck
         run: yarn typecheck
+        env:
+          # prisma generate lee DATABASE_URL desde prisma.config.ts (no necesita DB real)
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
 
       - name: Build
         run: yarn build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3003/api
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public

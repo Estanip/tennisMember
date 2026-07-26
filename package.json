@@ -8,7 +8,7 @@
   "scripts": {
     "dev:api": "yarn workspace @socios/api dev",
     "dev:web": "yarn workspace @socios/web dev",
-    "build": "yarn workspace @socios/shared build && yarn workspace @socios/api build && yarn workspace @socios/web build",
+    "build": "yarn build:shared && yarn db:generate && yarn workspace @socios/api build && yarn workspace @socios/web build",
     "build:shared": "yarn workspace @socios/shared build",
     "build:api": "yarn workspace @socios/shared build && yarn workspace @socios/api prisma:generate && yarn workspace @socios/api build",
     "build:web": "yarn workspace @socios/shared build && yarn workspace @socios/web build",
@@ -17,7 +17,7 @@
     "format": "biome format --write .",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "typecheck": "yarn workspace @socios/shared typecheck && yarn workspace @socios/api typecheck && yarn workspace @socios/web typecheck",
+    "typecheck": "yarn build:shared && yarn db:generate && yarn workspace @socios/shared typecheck && yarn workspace @socios/api typecheck && yarn workspace @socios/web typecheck",
     "db:generate": "yarn workspace @socios/api prisma:generate",
     "db:migrate": "yarn workspace @socios/api prisma:migrate",
     "db:migrate:deploy": "yarn workspace @socios/api prisma:migrate:deploy",

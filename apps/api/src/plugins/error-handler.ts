@@ -1,4 +1,10 @@
-import { Prisma } from "@prisma/client";
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientUnknownRequestError,
+  PrismaClientValidationError,
+} from "@prisma/client/runtime/library";
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { isAppError } from "../lib/errors.js";
@@ -35,7 +41,7 @@ function getErrorCode(error: unknown): string {
   if (isAppError(error)) {
     return error.code;
   }
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (error instanceof PrismaClientKnownRequestError) {
     return error.code;
   }
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -52,7 +58,7 @@ function describePrismaError(error: unknown): {
   persistMessage: string;
   prisma?: Record<string, unknown>;
 } | null {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (error instanceof PrismaClientKnownRequestError) {
     const meta = (error.meta ?? {}) as Record<string, unknown>;
     const column = typeof meta.column === "string" ? meta.column : undefined;
     const table = typeof meta.table === "string" ? meta.table : undefined;
@@ -88,7 +94,7 @@ function describePrismaError(error: unknown): {
     };
   }
 
-  if (error instanceof Prisma.PrismaClientValidationError) {
+  if (error instanceof PrismaClientValidationError) {
     return {
       logMessage: "Prisma validation error (query args do not match schema)",
       persistMessage: error.message,
@@ -96,7 +102,7 @@ function describePrismaError(error: unknown): {
     };
   }
 
-  if (error instanceof Prisma.PrismaClientInitializationError) {
+  if (error instanceof PrismaClientInitializationError) {
     return {
       logMessage: `Prisma initialization error${error.errorCode ? ` (${error.errorCode})` : ""}`,
       persistMessage: error.message,
@@ -108,7 +114,7 @@ function describePrismaError(error: unknown): {
     };
   }
 
-  if (error instanceof Prisma.PrismaClientRustPanicError) {
+  if (error instanceof PrismaClientRustPanicError) {
     return {
       logMessage: "Prisma engine panic",
       persistMessage: error.message,
@@ -116,7 +122,7 @@ function describePrismaError(error: unknown): {
     };
   }
 
-  if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+  if (error instanceof PrismaClientUnknownRequestError) {
     return {
       logMessage: "Prisma unknown request error",
       persistMessage: error.message,

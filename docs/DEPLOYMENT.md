@@ -55,6 +55,7 @@ Workflow: `.github/workflows/ci.yml`
 
 - Trigger: push/PR a `main` o `master`
 - Pasos: `yarn install` → `yarn lint` → `yarn typecheck` → `yarn build`
+- `typecheck` / `build` generan `@socios/shared` y el Prisma Client antes de `tsc`
 - Deploy: **no** está en Actions; Railway despliega al conectar el repo en el dashboard
 
 ## Railway (ambiente test)
