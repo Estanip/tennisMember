@@ -87,6 +87,6 @@ El script busca estas etiquetas (como en el form):
 - `APELLIDO`
 - `DNI`
 - `FECHA DE NACIMIENTO` (formato `dd/mm/aaaa`)
-- `NUMERO DE TELEFONO`
+- `Teléfono` (también acepta `TELEFONO`, `NUMERO DE TELEFONO`, `NRO DE TELEFONO`)
 
 Usá preguntas separadas **`Nombre`** y **`Apellido`** (obligatorias). Actualizá el Apps Script con `integrations/google-form/Code.gs`.

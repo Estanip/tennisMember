@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nombre y apellido separados (`firstName` / `lastName`); `fullName` derivado en la API
 - Logger Pino con niveles (`LOG_LEVEL`), JSON para plataformas o pretty con color/emoji (`LOG_PRETTY`)
 - Logs de monitoreo en auth, members, webhook Google Form y email (info/warn/error/debug)
+- Google Form Apps Script: alias de teléfono (`Teléfono` / `NUMERO DE TELEFONO`, etc.)
 - Edición de socio: todos los campos editables excepto email
 - Soft delete con status `3` (Eliminado) + `deletedAt`; filtro y restablecer a Habilitado
 - Motivo de baja al eliminar: `FALTA_DE_PAGO` | `BAJA_DE_SOCIO` | `OTRA` (+ detalle obligatorio si Otra); se limpia al restablecer

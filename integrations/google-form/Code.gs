@@ -5,8 +5,8 @@
  * Docs: docs/GOOGLE_FORM.md
  */
 
-const WEBHOOK_URL = "https://YOUR_NGROK_HOST/api/webhooks/google-form";
-const WEBHOOK_SECRET = "local-google-form-webhook-secret";
+const WEBHOOK_URL = "<WEBHOOK_URL>/api/webhooks/google-form";
+const WEBHOOK_SECRET = "<WEBHOOK_SECRET>";
 
 /**
  * @param {GoogleAppsScript.Events.FormsOnFormSubmit} e
@@ -34,7 +34,13 @@ function onFormSubmit(e) {
       byTitle[normalizeTitle("FECHA DE NACIMIENTO")] ||
       byTitle[normalizeTitle("FECHA NACIMIENTO")] ||
       "",
-    phone: byTitle[normalizeTitle("NUMERO DE TELEFONO")] || "",
+    phone: String(
+      byTitle[normalizeTitle("Teléfono")] ||
+        byTitle[normalizeTitle("TELEFONO")] ||
+        byTitle[normalizeTitle("NUMERO DE TELEFONO")] ||
+        byTitle[normalizeTitle("NRO DE TELEFONO")] ||
+        "",
+    ).replace(/\D/g, ""),
   };
 
   if (
