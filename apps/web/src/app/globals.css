@@ -121,6 +121,24 @@ select {
   font-size: 1.1rem;
 }
 
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-right: auto;
+  margin-left: 1.5rem;
+}
+
+.topbar-nav a {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.topbar-nav a:hover {
+  color: var(--primary);
+}
+
 .topbar-actions {
   display: flex;
   align-items: center;

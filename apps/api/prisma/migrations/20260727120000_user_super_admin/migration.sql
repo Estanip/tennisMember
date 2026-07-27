@@ -1,0 +1,2 @@
+-- Add SUPER_ADMIN to UserRole enum
+ALTER TYPE "UserRole" ADD VALUE 'SUPER_ADMIN';

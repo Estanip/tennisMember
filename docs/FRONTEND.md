@@ -6,7 +6,8 @@ Aplicación: `apps/web` (Next.js 16 App Router, React 19, TypeScript estricto).
 
 - React Context API (`AuthProvider` / `useAuth`) para sesión.
 - Token JWT en `localStorage` vía el API client.
-- `ADMIN`: puede crear, editar y eliminar socios en UI.
+- `ADMIN` y `SUPER_ADMIN`: crear, editar y eliminar socios en UI.
+- `SUPER_ADMIN`: además sección `/users` para gestionar usuarios y roles.
 - `USER`: solo listado/consulta; sin acciones de escritura ni rutas de alta/edición.
 
 ## API client

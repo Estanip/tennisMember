@@ -1,3 +1,4 @@
+import { USER_ROLE_VALUES } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
 import { AuthService } from "./auth.service.js";
 
@@ -32,7 +33,7 @@ const loginResponseSchema = {
             id: { type: "string" },
             email: { type: "string" },
             name: { type: "string" },
-            role: { type: "string", enum: ["ADMIN", "USER"] },
+            role: { type: "string", enum: [...USER_ROLE_VALUES] },
           },
         },
       },
@@ -97,7 +98,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
                   id: { type: "string" },
                   email: { type: "string" },
                   name: { type: "string" },
-                  role: { type: "string", enum: ["ADMIN", "USER"] },
+                  role: { type: "string", enum: [...USER_ROLE_VALUES] },
                 },
               },
             },

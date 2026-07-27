@@ -18,6 +18,7 @@ Proveer un backoffice simple y confiable para:
 - **Login únicamente**: no existe flujo de registro de nuevos usuarios desde la aplicación.
 - Los usuarios de acceso se dan de alta por fuera del flujo público (p. ej. seed, operación interna o bootstrap).
 - Roles:
+  - **SUPER_ADMIN**: gestión de usuarios del backoffice (roles y contraseñas) y todo lo de ADMIN.
   - **ADMIN**: puede crear y editar socios.
   - **USER**: puede consultar el padrón (solo lectura); no puede crear ni editar.
 

@@ -1,14 +1,19 @@
 import type {
   ApiResponse,
   AuthUser,
+  BackofficeUser,
   CreateMemberRequest,
+  CreateUserRequest,
   DeleteMemberRequest,
   LoginRequest,
   LoginResponse,
   Member,
   MemberListQuery,
   PaginatedMembers,
+  PaginatedUsers,
   UpdateMemberRequest,
+  UpdateUserRequest,
+  UserListQuery,
 } from "@socios/shared";
 
 const TOKEN_KEY = "socios_token";
@@ -91,6 +96,33 @@ class ApiClient {
   async restoreMember(id: string): Promise<Member> {
     return this.request<Member>(`/members/${id}/restore`, {
       method: "POST",
+    });
+  }
+
+  async listUsers(query: UserListQuery = {}): Promise<PaginatedUsers> {
+    const params = new URLSearchParams();
+    if (query.page) params.set("page", String(query.page));
+    if (query.pageSize) params.set("pageSize", String(query.pageSize));
+    if (query.search) params.set("search", query.search);
+    const qs = params.toString();
+    return this.request<PaginatedUsers>(`/users${qs ? `?${qs}` : ""}`);
+  }
+
+  async getUser(id: string): Promise<BackofficeUser> {
+    return this.request<BackofficeUser>(`/users/${id}`);
+  }
+
+  async createUser(payload: CreateUserRequest): Promise<BackofficeUser> {
+    return this.request<BackofficeUser>("/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateUser(id: string, payload: UpdateUserRequest): Promise<BackofficeUser> {
+    return this.request<BackofficeUser>(`/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
     });
   }
 

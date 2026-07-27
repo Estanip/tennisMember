@@ -1,7 +1,7 @@
 "use client";
 
 import type { AuthUser } from "@socios/shared";
-import { USER_ROLES } from "@socios/shared";
+import { canManageMembers, canManageUsers } from "@socios/shared";
 import {
   createContext,
   type ReactNode,
@@ -16,7 +16,10 @@ import { apiClient } from "@/lib/api-client";
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
+  /** @deprecated Use canWriteMembers */
   isAdmin: boolean;
+  canWriteMembers: boolean;
+  isSuperAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -61,16 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const canWriteMembers = user ? canManageMembers(user.role) : false;
+  const isSuperAdmin = user ? canManageUsers(user.role) : false;
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       loading,
-      isAdmin: user?.role === USER_ROLES.ADMIN,
+      isAdmin: canWriteMembers,
+      canWriteMembers,
+      isSuperAdmin,
       login,
       logout,
       refresh,
     }),
-    [user, loading, login, logout, refresh],
+    [user, loading, canWriteMembers, isSuperAdmin, login, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

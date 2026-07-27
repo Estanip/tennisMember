@@ -1,14 +1,47 @@
 export const USER_ROLES = {
-  ADMIN: "ADMIN",
   USER: "USER",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN",
 } as const;
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
+export const USER_ROLE_VALUES: UserRole[] = [
+  USER_ROLES.USER,
+  USER_ROLES.ADMIN,
+  USER_ROLES.SUPER_ADMIN,
+];
+
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
   USER: "Usuario",
+  SUPER_ADMIN: "Super administrador",
 };
+
+export const USER_PASSWORD_MIN_LENGTH = 8;
+export const USER_NAME_MIN_LENGTH = 2;
+export const USER_NAME_MAX_LENGTH = 80;
+
+export function isUserRole(value: string): value is UserRole {
+  return USER_ROLE_VALUES.includes(value as UserRole);
+}
+
+export function canManageMembers(role: UserRole): boolean {
+  return role === USER_ROLES.ADMIN || role === USER_ROLES.SUPER_ADMIN;
+}
+
+export function canManageUsers(role: UserRole): boolean {
+  return role === USER_ROLES.SUPER_ADMIN;
+}
+
+export function isValidUserName(name: string): boolean {
+  const trimmed = name.trim();
+  return trimmed.length >= USER_NAME_MIN_LENGTH && trimmed.length <= USER_NAME_MAX_LENGTH;
+}
+
+export function isValidUserPassword(password: string): boolean {
+  return password.length >= USER_PASSWORD_MIN_LENGTH;
+}
 
 export const MEMBER_CONDITIONS = {
   SOCIO_REGULAR: "SOCIO_REGULAR",

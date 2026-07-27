@@ -113,3 +113,39 @@ export interface PaginatedMembers {
   pageSize: number;
   totalPages: number;
 }
+
+export interface BackofficeUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  name: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserRequest {
+  name?: string;
+  password?: string;
+  role?: UserRole;
+}
+
+export interface UserListQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface PaginatedUsers {
+  items: BackofficeUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}

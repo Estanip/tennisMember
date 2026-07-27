@@ -12,7 +12,7 @@ Autenticación de acceso al backoffice.
 | email | Único |
 | name | Nombre visible |
 | passwordHash | bcrypt |
-| role | `ADMIN` \| `USER` |
+| role | `USER` \| `ADMIN` \| `SUPER_ADMIN` |
 
 ## Member (Socio)
 

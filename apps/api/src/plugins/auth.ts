@@ -1,5 +1,5 @@
 import type { UserRole } from "@socios/shared";
-import { USER_ROLES } from "@socios/shared";
+import { canManageMembers, canManageUsers } from "@socios/shared";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { AppError } from "../lib/errors.js";
@@ -35,15 +35,31 @@ async function authPlugin(fastify: import("fastify").FastifyInstance): Promise<v
     }
   });
 
-  fastify.decorate("requireAdmin", async (request: FastifyRequest, _reply: FastifyReply) => {
+  fastify.decorate("requireMemberWrite", async (request: FastifyRequest, _reply: FastifyReply) => {
     await fastify.authenticate(request, _reply);
-    if (request.user.role !== USER_ROLES.ADMIN) {
+    if (!canManageMembers(request.user.role)) {
       log.warn(
         { userId: request.user.sub, role: request.user.role, path: request.url },
-        "Admin access denied",
+        "Member write access denied",
       );
-      throw new AppError("Forbidden: admin role required", 403, "FORBIDDEN");
+      throw new AppError("Forbidden: member write access required", 403, "FORBIDDEN");
     }
+  });
+
+  fastify.decorate("requireSuperAdmin", async (request: FastifyRequest, _reply: FastifyReply) => {
+    await fastify.authenticate(request, _reply);
+    if (!canManageUsers(request.user.role)) {
+      log.warn(
+        { userId: request.user.sub, role: request.user.role, path: request.url },
+        "Super admin access denied",
+      );
+      throw new AppError("Forbidden: super admin required", 403, "FORBIDDEN");
+    }
+  });
+
+  /** @deprecated Use requireMemberWrite */
+  fastify.decorate("requireAdmin", async (request: FastifyRequest, reply: FastifyReply) => {
+    await fastify.requireMemberWrite(request, reply);
   });
 }
 
@@ -52,6 +68,8 @@ export default fp(authPlugin);
 declare module "fastify" {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireMemberWrite: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireSuperAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     requireAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }

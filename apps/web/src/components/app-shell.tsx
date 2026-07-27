@@ -1,6 +1,6 @@
 "use client";
 
-import { USER_ROLE_LABELS } from "@socios/shared";
+import { USER_ROLE_LABELS, USER_ROLES } from "@socios/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
@@ -39,6 +39,10 @@ export function AppShell({
         <Link href="/members" className="brand">
           Socios Backoffice
         </Link>
+        <nav className="topbar-nav">
+          <Link href="/members">Socios</Link>
+          {user.role === USER_ROLES.SUPER_ADMIN ? <Link href="/users">Usuarios</Link> : null}
+        </nav>
         <div className="topbar-actions">
           <span>
             {user.name} · {USER_ROLE_LABELS[user.role]}

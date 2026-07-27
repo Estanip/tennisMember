@@ -246,7 +246,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     "/members",
     {
-      preHandler: [app.requireAdmin],
+      preHandler: [app.requireMemberWrite],
       schema: {
         tags: ["Members"],
         summary: "Create member (ADMIN)",
@@ -279,7 +279,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
   app.patch(
     "/members/:id",
     {
-      preHandler: [app.requireAdmin],
+      preHandler: [app.requireMemberWrite],
       schema: {
         tags: ["Members"],
         summary: "Update member (ADMIN) — email is immutable",
@@ -321,7 +321,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
   app.delete(
     "/members/:id",
     {
-      preHandler: [app.requireAdmin],
+      preHandler: [app.requireMemberWrite],
       schema: {
         tags: ["Members"],
         summary: "Soft delete member with reason (ADMIN)",
@@ -362,7 +362,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     "/members/:id/restore",
     {
-      preHandler: [app.requireAdmin],
+      preHandler: [app.requireMemberWrite],
       schema: {
         tags: ["Members"],
         summary: "Restore soft-deleted member (ADMIN) — status Enabled, clear deletedAt",

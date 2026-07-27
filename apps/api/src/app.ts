@@ -7,6 +7,7 @@ import Fastify from "fastify";
 import { createRootLogger } from "./lib/logger.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { memberRoutes } from "./modules/members/member.routes.js";
+import { userRoutes } from "./modules/users/user.routes.js";
 import { googleFormWebhookRoutes } from "./modules/webhooks/google-form.routes.js";
 import authPlugin from "./plugins/auth.js";
 import errorHandlerPlugin, { notFoundHandler } from "./plugins/error-handler.js";
@@ -92,6 +93,7 @@ export async function buildApp() {
 
   await app.register(authRoutes, { prefix: "/api" });
   await app.register(memberRoutes, { prefix: "/api" });
+  await app.register(userRoutes, { prefix: "/api" });
   await app.register(googleFormWebhookRoutes, { prefix: "/api" });
 
   return app;

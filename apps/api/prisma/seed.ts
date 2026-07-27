@@ -5,19 +5,35 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
-  const passwordHash = await bcrypt.hash("Alem1916", 10);
+  const adminPasswordHash = await bcrypt.hash("Alem1916", 10);
+  const userPasswordHash = await bcrypt.hash("User1916", 10);
+
+  await prisma.user.upsert({
+    where: { email: "superadmin@alem.com" },
+    update: {
+      name: "Super Administrador",
+      passwordHash: adminPasswordHash,
+      role: USER_ROLES.SUPER_ADMIN,
+    },
+    create: {
+      email: "superadmin@alem.com",
+      name: "Super Administrador",
+      passwordHash: adminPasswordHash,
+      role: USER_ROLES.SUPER_ADMIN,
+    },
+  });
 
   await prisma.user.upsert({
     where: { email: "admin@alem.com" },
     update: {
       name: "Administrador",
-      passwordHash,
+      passwordHash: adminPasswordHash,
       role: USER_ROLES.ADMIN,
     },
     create: {
       email: "admin@alem.com",
       name: "Administrador",
-      passwordHash,
+      passwordHash: adminPasswordHash,
       role: USER_ROLES.ADMIN,
     },
   });
@@ -26,13 +42,13 @@ async function main(): Promise<void> {
     where: { email: "user@alem.com" },
     update: {
       name: "Usuario Lectura",
-      passwordHash: await bcrypt.hash("User1916", 10),
+      passwordHash: userPasswordHash,
       role: USER_ROLES.USER,
     },
     create: {
       email: "user@alem.com",
       name: "Usuario Lectura",
-      passwordHash: await bcrypt.hash("User1916", 10),
+      passwordHash: userPasswordHash,
       role: USER_ROLES.USER,
     },
   });
