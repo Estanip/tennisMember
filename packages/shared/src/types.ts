@@ -28,7 +28,8 @@ export interface AuthUser {
 }
 
 export interface LoginRequest {
-  email: string;
+  /** Email or username */
+  identifier: string;
   password: string;
 }
 
@@ -117,6 +118,7 @@ export interface PaginatedMembers {
 export interface BackofficeUser {
   id: string;
   email: string;
+  username: string | null;
   name: string;
   role: UserRole;
   createdAt: string;
@@ -125,6 +127,7 @@ export interface BackofficeUser {
 
 export interface CreateUserRequest {
   email: string;
+  username?: string | null;
   name: string;
   password: string;
   role: UserRole;
@@ -132,6 +135,7 @@ export interface CreateUserRequest {
 
 export interface UpdateUserRequest {
   name?: string;
+  username?: string | null;
   password?: string;
   role?: UserRole;
 }

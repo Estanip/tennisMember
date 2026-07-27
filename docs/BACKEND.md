@@ -52,7 +52,8 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 ## Endpoints MVP (socios)
 
-- `POST /api/auth/login`, `GET /api/auth/me`
+- `POST /api/auth/login` — body `{ identifier, password }` (email o username)
+- `GET /api/auth/me`
 - `GET /api/members` (search, filtros, paginación) — autenticado
 - `GET /api/members/:id` — autenticado
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo)

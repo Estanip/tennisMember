@@ -1,4 +1,5 @@
 import type { AuthUser, LoginRequest, LoginResponse, UserRole } from "@socios/shared";
+import { normalizeMemberEmail, normalizeUsername } from "@socios/shared";
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
 import { AppError } from "../../lib/errors.js";
@@ -11,18 +12,18 @@ export class AuthService {
   constructor(private readonly app: FastifyInstance) {}
 
   async login(input: LoginRequest): Promise<LoginResponse> {
-    const email = input.email.toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email } });
+    const identifier = input.identifier.trim();
+    const user = await this.findUserByIdentifier(identifier);
 
     if (!user) {
-      log.warn({ email }, "Login failed: user not found");
-      throw new AppError("Invalid email or password", 401, "INVALID_CREDENTIALS");
+      log.warn({ identifier }, "Login failed: user not found");
+      throw new AppError("Invalid email, username or password", 401, "INVALID_CREDENTIALS");
     }
 
     const isValid = await bcrypt.compare(input.password, user.passwordHash);
     if (!isValid) {
-      log.warn({ email, userId: user.id }, "Login failed: invalid password");
-      throw new AppError("Invalid email or password", 401, "INVALID_CREDENTIALS");
+      log.warn({ identifier, userId: user.id }, "Login failed: invalid password");
+      throw new AppError("Invalid email, username or password", 401, "INVALID_CREDENTIALS");
     }
 
     const authUser: AuthUser = {
@@ -41,5 +42,19 @@ export class AuthService {
 
     log.info({ userId: user.id, email: user.email, role: user.role }, "Login successful");
     return { token, user: authUser };
+  }
+
+  private async findUserByIdentifier(identifier: string) {
+    if (identifier.includes("@")) {
+      const email = normalizeMemberEmail(identifier);
+      return prisma.user.findUnique({ where: { email } });
+    }
+
+    const username = normalizeUsername(identifier);
+    if (!username) {
+      return null;
+    }
+
+    return prisma.user.findUnique({ where: { username } });
   }
 }

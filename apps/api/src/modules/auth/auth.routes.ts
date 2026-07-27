@@ -4,10 +4,10 @@ import { AuthService } from "./auth.service.js";
 
 const loginBodySchema = {
   type: "object",
-  required: ["email", "password"],
+  required: ["identifier", "password"],
   additionalProperties: false,
   properties: {
-    email: { type: "string", format: "email" },
+    identifier: { type: "string", minLength: 1 },
     password: { type: "string", minLength: 1 },
   },
 } as const;
@@ -60,7 +60,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: ["Auth"],
-        summary: "Login with email and password",
+        summary: "Login with email or username and password",
         body: loginBodySchema,
         response: {
           200: loginResponseSchema,
@@ -69,7 +69,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
-      const body = request.body as { email: string; password: string };
+      const body = request.body as { identifier: string; password: string };
       const data = await authService.login(body);
       return reply.send({ success: true, data });
     },

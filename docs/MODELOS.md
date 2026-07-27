@@ -10,6 +10,7 @@ Autenticación de acceso al backoffice.
 | Campo | Notas |
 | --- | --- |
 | email | Único |
+| username | Opcional; único si existe (login alternativo, 3-30 chars) |
 | name | Nombre visible |
 | passwordHash | bcrypt |
 | role | `USER` \| `ADMIN` \| `SUPER_ADMIN` |

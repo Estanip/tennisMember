@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rol `SUPER_ADMIN` y gestión de usuarios del backoffice (`/users`, API `GET|POST|PATCH /api/users`)
 - Helpers de permisos en `@socios/shared` (`canManageMembers`, `canManageUsers`)
 - Seed: `superadmin@alem.com` (SUPER_ADMIN)
+- Username opcional y único en usuarios; login con email o username (`identifier`)
 
 ### Changed
 

@@ -3,11 +3,14 @@
 import type { CreateUserRequest, UpdateUserRequest, UserRole } from "@socios/shared";
 import {
   isValidUserName,
+  isValidUsername,
   isValidUserPassword,
   normalizeMemberEmail,
+  normalizeOptionalUsername,
   USER_PASSWORD_MIN_LENGTH,
   USER_ROLE_LABELS,
   USER_ROLE_VALUES,
+  USER_USERNAME_MAX_LENGTH,
 } from "@socios/shared";
 import { type FormEvent, useState } from "react";
 
@@ -20,7 +23,7 @@ interface UserFormCreateProps {
 
 interface UserFormEditProps {
   mode: "edit";
-  initial?: Partial<CreateUserRequest> & { email?: string };
+  initial?: Partial<CreateUserRequest> & { email?: string; username?: string | null };
   submitLabel: string;
   onSubmit: (values: UpdateUserRequest) => Promise<void>;
 }
@@ -32,6 +35,7 @@ export function UserForm(props: UserFormProps) {
   const emailReadOnly = mode === "edit";
   const passwordRequired = mode === "create";
   const [email, setEmail] = useState(initial?.email ?? "");
+  const [username, setUsername] = useState(initial?.username ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(initial?.role ?? USER_ROLE_VALUES[0]);
@@ -46,6 +50,15 @@ export function UserForm(props: UserFormProps) {
     const trimmedName = name.trim();
     if (!isValidUserName(trimmedName)) {
       setError("El nombre debe tener entre 2 y 80 caracteres");
+      setSubmitting(false);
+      return;
+    }
+
+    const normalizedUsername = normalizeOptionalUsername(username);
+    if (username.trim() && (!normalizedUsername || !isValidUsername(normalizedUsername))) {
+      setError(
+        "El usuario debe tener 3-30 caracteres, empezar con letra y usar solo minúsculas, números, puntos, guiones o guiones bajos",
+      );
       setSubmitting(false);
       return;
     }
@@ -67,6 +80,7 @@ export function UserForm(props: UserFormProps) {
         const payload: UpdateUserRequest = {
           name: trimmedName,
           role,
+          username: normalizedUsername,
         };
         if (password.trim()) {
           payload.password = password;
@@ -76,6 +90,7 @@ export function UserForm(props: UserFormProps) {
         const normalizedEmail = normalizeMemberEmail(email);
         await onSubmit({
           email: normalizedEmail,
+          username: normalizedUsername,
           name: trimmedName,
           password,
           role,
@@ -101,6 +116,20 @@ export function UserForm(props: UserFormProps) {
           required={!emailReadOnly}
           disabled={emailReadOnly || submitting}
         />
+      </div>
+
+      <div className="field">
+        <label htmlFor="user-username">Usuario (opcional)</label>
+        <input
+          id="user-username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value.toLowerCase())}
+          disabled={submitting}
+          maxLength={USER_USERNAME_MAX_LENGTH}
+          autoComplete="off"
+          placeholder="ej. admin.alem"
+        />
+        <p className="muted">3-30 caracteres, empieza con letra; minúsculas, números, . _ -</p>
       </div>
 
       <div className="field">

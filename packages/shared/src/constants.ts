@@ -43,6 +43,35 @@ export function isValidUserPassword(password: string): boolean {
   return password.length >= USER_PASSWORD_MIN_LENGTH;
 }
 
+/** Optional login handle: 3–30 chars, starts with letter, lowercase a-z 0-9 . _ - */
+export const USER_USERNAME_MIN_LENGTH = 3;
+export const USER_USERNAME_MAX_LENGTH = 30;
+export const USER_USERNAME_PATTERN = /^[a-z][a-z0-9._-]{2,29}$/;
+
+export function normalizeUsername(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function normalizeOptionalUsername(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const normalized = normalizeUsername(value);
+  return normalized.length > 0 ? normalized : null;
+}
+
+export function isValidUsername(value: string): boolean {
+  const normalized = normalizeUsername(value);
+  if (normalized.includes("@")) {
+    return false;
+  }
+  return (
+    normalized.length >= USER_USERNAME_MIN_LENGTH &&
+    normalized.length <= USER_USERNAME_MAX_LENGTH &&
+    USER_USERNAME_PATTERN.test(normalized)
+  );
+}
+
 export const MEMBER_CONDITIONS = {
   SOCIO_REGULAR: "SOCIO_REGULAR",
   ABONADO_TENIS: "ABONADO_TENIS",

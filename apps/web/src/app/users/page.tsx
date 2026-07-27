@@ -69,7 +69,7 @@ export default function UsersPage() {
           <label htmlFor="user-search">Búsqueda</label>
           <input
             id="user-search"
-            placeholder="Nombre o email"
+            placeholder="Nombre, usuario o email"
             value={search}
             onChange={(e) => {
               setPage(1);
@@ -88,6 +88,7 @@ export default function UsersPage() {
                 <thead>
                   <tr>
                     <th>Nombre</th>
+                    <th>Usuario</th>
                     <th>Email</th>
                     <th>Rol</th>
                     <th className="col-actions">Acciones</th>
@@ -96,7 +97,7 @@ export default function UsersPage() {
                 <tbody>
                   {data.items.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="muted">
+                      <td colSpan={5} className="muted">
                         No hay usuarios para mostrar
                       </td>
                     </tr>
@@ -104,6 +105,7 @@ export default function UsersPage() {
                     data.items.map((user) => (
                       <tr key={user.id}>
                         <td>{user.name}</td>
+                        <td>{user.username ?? "—"}</td>
                         <td>{user.email}</td>
                         <td>{USER_ROLE_LABELS[user.role]}</td>
                         <td className="col-actions">

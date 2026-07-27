@@ -20,7 +20,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   canWriteMembers: boolean;
   isSuperAdmin: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
 }
@@ -54,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await apiClient.login({ email, password });
+  const login = useCallback(async (identifier: string, password: string) => {
+    const result = await apiClient.login({ identifier, password });
     setUser(result.user);
   }, []);
 

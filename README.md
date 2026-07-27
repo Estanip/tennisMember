@@ -31,8 +31,8 @@ yarn dev:web
 
 ### Credenciales seed
 
-- Super admin: `superadmin@alem.com` / `Alem1916`
-- Admin: `admin@alem.com` / `Alem1916`
+- Super admin: `superadmin@alem.com` o `superadmin` / `Alem1916`
+- Admin: `admin@alem.com` o `admin` / `Alem1916`
 - Usuario lectura: `user@alem.com` / `User1916`
 
 ## Ambiente test (Railway)

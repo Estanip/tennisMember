@@ -12,11 +12,13 @@ async function main(): Promise<void> {
     where: { email: "superadmin@alem.com" },
     update: {
       name: "Super Administrador",
+      username: "superadmin",
       passwordHash: adminPasswordHash,
       role: USER_ROLES.SUPER_ADMIN,
     },
     create: {
       email: "superadmin@alem.com",
+      username: "superadmin",
       name: "Super Administrador",
       passwordHash: adminPasswordHash,
       role: USER_ROLES.SUPER_ADMIN,
@@ -27,11 +29,13 @@ async function main(): Promise<void> {
     where: { email: "admin@alem.com" },
     update: {
       name: "Administrador",
+      username: "admin",
       passwordHash: adminPasswordHash,
       role: USER_ROLES.ADMIN,
     },
     create: {
       email: "admin@alem.com",
+      username: "admin",
       name: "Administrador",
       passwordHash: adminPasswordHash,
       role: USER_ROLES.ADMIN,

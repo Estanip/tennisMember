@@ -10,8 +10,10 @@ import type {
 import {
   isUserRole,
   isValidUserName,
+  isValidUsername,
   isValidUserPassword,
   normalizeMemberEmail,
+  normalizeOptionalUsername,
   USER_ROLES,
 } from "@socios/shared";
 import bcrypt from "bcryptjs";
@@ -37,6 +39,7 @@ export class UserService {
       ? {
           OR: [
             { email: { contains: search, mode: "insensitive" } },
+            { username: { contains: search, mode: "insensitive" } },
             { name: { contains: search, mode: "insensitive" } },
           ],
         }
@@ -76,6 +79,7 @@ export class UserService {
     const email = normalizeMemberEmail(input.email);
     const name = input.name.trim();
     const password = input.password;
+    const username = this.resolveUsername(input.username);
 
     if (!isValidUserName(name)) {
       throw new AppError("Name must be between 2 and 80 characters", 400, "INVALID_NAME");
@@ -93,10 +97,13 @@ export class UserService {
       throw new AppError("Email already in use", 409, "EMAIL_TAKEN");
     }
 
+    await this.assertUsernameAvailable(username);
+
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const user = await prisma.user.create({
       data: {
         email,
+        username,
         name,
         passwordHash,
         role: input.role,
@@ -104,7 +111,7 @@ export class UserService {
     });
 
     const dto = toBackofficeUserDto(user);
-    log.info({ userId: dto.id, email, role: dto.role }, "User created");
+    log.info({ userId: dto.id, email, username, role: dto.role }, "User created");
     return dto;
   }
 
@@ -117,6 +124,8 @@ export class UserService {
 
     const nextName = input.name !== undefined ? input.name.trim() : user.name;
     const nextRole: UserRole = input.role !== undefined ? input.role : (user.role as UserRole);
+    const nextUsername =
+      input.username !== undefined ? this.resolveUsername(input.username) : user.username;
 
     if (input.name !== undefined && !isValidUserName(nextName)) {
       throw new AppError("Name must be between 2 and 80 characters", 400, "INVALID_NAME");
@@ -130,9 +139,14 @@ export class UserService {
 
     await this.assertCanChangeRole(user.id, user.role, nextRole, actorId);
 
+    if (input.username !== undefined) {
+      await this.assertUsernameAvailable(nextUsername, id);
+    }
+
     const data: Prisma.UserUpdateInput = {
       name: nextName,
       role: nextRole,
+      username: nextUsername,
     };
 
     if (input.password) {
@@ -147,6 +161,36 @@ export class UserService {
     const dto = toBackofficeUserDto(updated);
     log.info({ userId: id, role: dto.role, actorId }, "User updated");
     return dto;
+  }
+
+  private resolveUsername(value: string | null | undefined): string | null {
+    const normalized = normalizeOptionalUsername(value);
+    if (normalized === null) {
+      return null;
+    }
+    if (!isValidUsername(normalized)) {
+      throw new AppError(
+        "Username must be 3-30 characters, start with a letter, and use only lowercase letters, numbers, dots, underscores or hyphens",
+        400,
+        "INVALID_USERNAME",
+      );
+    }
+    return normalized;
+  }
+
+  private async assertUsernameAvailable(
+    username: string | null,
+    excludeUserId?: string,
+  ): Promise<void> {
+    if (!username) {
+      return;
+    }
+
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing && existing.id !== excludeUserId) {
+      log.warn({ username }, "Username already in use");
+      throw new AppError("Username already in use", 409, "USERNAME_TAKEN");
+    }
   }
 
   private async assertCanChangeRole(

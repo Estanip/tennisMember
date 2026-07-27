@@ -4,11 +4,12 @@ import { UserService } from "./user.service.js";
 
 const userSchema = {
   type: "object",
-  required: ["id", "email", "name", "role", "createdAt", "updatedAt"],
+  required: ["id", "email", "username", "name", "role", "createdAt", "updatedAt"],
   additionalProperties: false,
   properties: {
     id: { type: "string" },
     email: { type: "string" },
+    username: { type: ["string", "null"] },
     name: { type: "string" },
     role: { type: "string", enum: [...USER_ROLE_VALUES] },
     createdAt: { type: "string" },
@@ -46,6 +47,13 @@ const createBodySchema = {
   additionalProperties: false,
   properties: {
     email: { type: "string", format: "email", maxLength: 254 },
+    username: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", minLength: 3, maxLength: 30, pattern: "^[a-z][a-z0-9._-]{2,29}$" },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     name: { type: "string", minLength: 2, maxLength: 80 },
     password: { type: "string", minLength: 8 },
     role: { type: "string", enum: [...USER_ROLE_VALUES] },
@@ -57,6 +65,13 @@ const updateBodySchema = {
   additionalProperties: false,
   properties: {
     name: { type: "string", minLength: 2, maxLength: 80 },
+    username: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", minLength: 3, maxLength: 30, pattern: "^[a-z][a-z0-9._-]{2,29}$" },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     password: { type: "string", minLength: 8 },
     role: { type: "string", enum: [...USER_ROLE_VALUES] },
   },
@@ -163,6 +178,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const body = request.body as {
         email: string;
+        username?: string | null;
         name: string;
         password: string;
         role: (typeof USER_ROLE_VALUES)[number];
@@ -204,6 +220,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params as { id: string };
       const body = request.body as {
         name?: string;
+        username?: string | null;
         password?: string;
         role?: (typeof USER_ROLE_VALUES)[number];
       };

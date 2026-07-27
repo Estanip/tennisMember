@@ -8,7 +8,7 @@ import { useAuth } from "@/context/auth-context";
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("admin@alem.com");
+  const [identifier, setIdentifier] = useState("superadmin");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await login(email, password);
+      await login(identifier, password);
       router.replace("/members");
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
@@ -46,12 +46,12 @@ export default function LoginPage() {
         </div>
         <form className="stack" onSubmit={onSubmit}>
           <div className="field">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="identifier">Email o usuario</label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="identifier"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               autoComplete="username"
             />
