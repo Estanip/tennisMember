@@ -30,6 +30,7 @@ Las reglas específicas del producto viven en los documentos referenciados abajo
    - **NUNCA** agregar `Co-authored-by: Cursor` ni ningún trailer/metadata de Cursor, Copilot u otra IA.
    - No usar `git commit --trailer` para co-autores de herramientas.
    - Si el entorno inyecta co-autoría automáticamente, el mensaje de commit debe quedar **solo** con el texto Conventional Commit del cambio (sin trailers de IA). Reintentar el commit sin trailers si hace falta.
+   - Husky `prepare-commit-msg` elimina trailers `Co-authored-by` de Cursor/Copilot/etc. antes de `commitlint`.
 
 ## 📚 CONTEXTO ESPECÍFICO DEL PROYECTO
 

@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Strip AI co-author trailers sometimes injected by Cursor / Copilot / similar tools.
+msg_file="$1"
+
+if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+  exit 0
+fi
+
+tmp_file="${msg_file}.tmp"
+grep -viE '^Co-authored-by:[[:space:]]*(Cursor|GitHub Copilot|Copilot|Claude|ChatGPT|OpenAI|Anthropic|Gemini)\b' "$msg_file" > "$tmp_file" || true
+mv "$tmp_file" "$msg_file"
