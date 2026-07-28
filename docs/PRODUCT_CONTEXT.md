@@ -11,7 +11,7 @@ Proveer un backoffice simple y confiable para:
 - Iniciar sesión (solo usuarios existentes; sin registro público).
 - Consultar socios (todos los roles autenticados).
 - Crear y editar socios (solo administradores).
-- Recibir solicitudes de alta de abono desde Google Form (aspirantes públicos) en estado Pendiente.
+- Recibir solicitudes de alta de abono desde Google Form (aspirantes públicos) en estado Habilitado.
 
 ## Autenticación y roles
 
@@ -49,7 +49,7 @@ Cada socio pertenece al club y tiene las siguientes propiedades:
 
 - **No Habilitado (`0`)**: el socio no está habilitado.
 - **Habilitado (`1`)**: el socio está activo / habilitado en el club.
-- **Pendiente (`2`)**: solicitud recibida (p. ej. Google Form); el admin debe revisar y aprobar/cambiar estado.
+- **Pendiente (`2`)**: estado intermedio de revisión manual (sigue disponible en el padrón).
 - **Eliminado (`3`)**: baja lógica; se setea `deletedAt` y un motivo (`Falta de pago`, `Baja de socio` u `Otra` + detalle). Se puede **restablecer** → status `1`, `deletedAt = null` y se limpian motivo/detalle.
 
 ### Baja
@@ -74,7 +74,7 @@ Campos del form → socio:
 Defaults al crear desde el form:
 
 - `condition` = Abonado Tenis
-- `status` = Pendiente (`2`)
+- `status` = Habilitado (`1`)
 
 Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE_FORM.md`).
 
@@ -85,8 +85,9 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 3. Alta (crear) de socios — solo ADMIN.
 4. Edición de socios (todos los campos excepto el email) — solo ADMIN.
 5. Soft delete de socios — solo ADMIN.
-6. Alta automática desde Google Form en estado Pendiente (webhook).
-7. Alerta por email al administrador cuando se crea un socio (app o Google Form).
+6. Alta automática desde Google Form en estado Habilitado (webhook).
+7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel).
+8. Exportar / importar socios en Excel (plantilla fija).
 
 ## Fuera de alcance (por ahora)
 

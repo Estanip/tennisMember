@@ -27,7 +27,8 @@ Plantilla: `apps/web/.env.example`.
 - Pantallas MVP:
   - Login
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)
-  - Alta y edición de socios (email read-only en edición; admin puede pasar Pendiente → Habilitado)
+  - Exportar listado a Excel; importar desde plantilla `.xlsx` (admin) con modal de resultado
+  - Alta y edición de socios (email read-only en edición)
 
 ## Convenciones
 

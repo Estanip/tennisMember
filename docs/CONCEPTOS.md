@@ -10,4 +10,4 @@
 | SUPER_ADMIN | Super administrador: gestión de usuarios + permisos de ADMIN |
 | ADMIN | Usuario con permiso de crear, editar y eliminar socios |
 | USER | Usuario de solo lectura del padrón |
-| Webhook Google Form | Alta automática de Abonado Tenis en estado Pendiente |
+| Webhook Google Form | Alta automática de Abonado Tenis en estado Habilitado |

@@ -121,6 +121,26 @@ export interface PaginatedMembers {
   totalPages: number;
 }
 
+export interface MemberImportRowIdentity {
+  row: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  dni?: string;
+  memberId?: string | null;
+}
+
+export interface MemberImportSkippedRow extends MemberImportRowIdentity {
+  reason: string;
+}
+
+export interface MemberImportResult {
+  created: number;
+  restored: number;
+  skipped: MemberImportSkippedRow[];
+  restoredRows: MemberImportRowIdentity[];
+}
+
 export interface BackofficeUser {
   id: string;
   email: string;

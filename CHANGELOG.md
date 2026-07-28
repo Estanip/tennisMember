@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seed: `superadmin@alem.com` (SUPER_ADMIN)
 - Username opcional y único en usuarios; login con email o username (`identifier`)
 - `memberId` opcional y único en socios (columna SQL `member_id`; id externo de otra DB)
+- Export/import de socios en Excel (`.xlsx`) con plantilla fija y resumen de omitidos/reactivados
+- Google Form: alta de abonado en estado **Habilitado** (antes Pendiente)
 
 ### Changed
 

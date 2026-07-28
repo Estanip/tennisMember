@@ -55,10 +55,13 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `POST /api/auth/login` — body `{ identifier, password }` (email o username)
 - `GET /api/auth/me`
 - `GET /api/members` (search, filtros, paginación) — autenticado
+- `GET /api/members/export` — Excel `.xlsx` con filtros del listado
+- `GET /api/members/import-template` — plantilla Excel (ADMIN)
+- `POST /api/members/import` — multipart `.xlsx` (ADMIN); alta parcial + resumen de omitidos/reactivados
 - `GET /api/members/:id` — autenticado
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo)
 - `GET|POST|PATCH /api/users` — solo `SUPER_ADMIN`
-- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea Abonado Tenis en estado Pendiente
+- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea Abonado Tenis en estado Habilitado
 
 Integración Google Form: `docs/GOOGLE_FORM.md`.
 

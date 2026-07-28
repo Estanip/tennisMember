@@ -363,3 +363,69 @@ export function isValidMemberDeleteReasonDetail(
   }
   return trimmed.length <= MEMBER_DELETE_REASON_DETAIL_MAX_LENGTH;
 }
+
+/** Excel import/export column headers (must match template exactly). */
+export const MEMBER_EXCEL_HEADERS = {
+  memberId: "Nro. Socio",
+  firstName: "Nombre",
+  lastName: "Apellido",
+  email: "Email",
+  dni: "DNI",
+  birthDate: "Fecha de nacimiento",
+  phone: "Teléfono",
+  condition: "Condición",
+  status: "Estado",
+} as const;
+
+export const MEMBER_EXCEL_HEADER_ORDER = [
+  MEMBER_EXCEL_HEADERS.memberId,
+  MEMBER_EXCEL_HEADERS.firstName,
+  MEMBER_EXCEL_HEADERS.lastName,
+  MEMBER_EXCEL_HEADERS.email,
+  MEMBER_EXCEL_HEADERS.dni,
+  MEMBER_EXCEL_HEADERS.birthDate,
+  MEMBER_EXCEL_HEADERS.phone,
+  MEMBER_EXCEL_HEADERS.condition,
+  MEMBER_EXCEL_HEADERS.status,
+] as const;
+
+export type MemberExcelHeader = (typeof MEMBER_EXCEL_HEADER_ORDER)[number];
+
+export function parseMemberExcelCondition(value: string): MemberCondition | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const upper = trimmed.toUpperCase().replace(/\s+/g, "_");
+  if (upper === MEMBER_CONDITIONS.SOCIO_REGULAR || upper === "SOCIO_REGULAR") {
+    return MEMBER_CONDITIONS.SOCIO_REGULAR;
+  }
+  if (upper === MEMBER_CONDITIONS.ABONADO_TENIS || upper === "ABONADO_TENIS") {
+    return MEMBER_CONDITIONS.ABONADO_TENIS;
+  }
+  const byLabel = (Object.entries(MEMBER_CONDITION_LABELS) as [MemberCondition, string][]).find(
+    ([, label]) => label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  return byLabel?.[0] ?? null;
+}
+
+/** Empty → ENABLED (import default). DELETED is not assignable via Excel. */
+export function parseMemberExcelStatus(value: string): MemberStatus | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return MEMBER_STATUS.ENABLED;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    const n = Number(trimmed);
+    if (isEditableMemberStatus(n)) {
+      return n;
+    }
+    return null;
+  }
+  const byLabel = (Object.entries(MEMBER_STATUS_LABELS) as [string, string][]).find(
+    ([, label]) => label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (!byLabel) {
+    return null;
+  }
+  const status = Number(byLabel[0]) as MemberStatus;
+  return isEditableMemberStatus(status) ? status : null;
+}

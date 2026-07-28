@@ -8,6 +8,7 @@ import type {
   LoginRequest,
   LoginResponse,
   Member,
+  MemberImportResult,
   MemberListQuery,
   PaginatedMembers,
   PaginatedUsers,
@@ -68,6 +69,46 @@ class ApiClient {
     return this.request<PaginatedMembers>(`/members${qs ? `?${qs}` : ""}`);
   }
 
+  async exportMembers(query: MemberListQuery = {}): Promise<void> {
+    const params = new URLSearchParams();
+    if (query.search) params.set("search", query.search);
+    if (query.condition) params.set("condition", query.condition);
+    if (query.status !== undefined) params.set("status", String(query.status));
+    const qs = params.toString();
+    await this.downloadFile(`/members/export${qs ? `?${qs}` : ""}`, "socios.xlsx");
+  }
+
+  async downloadMemberImportTemplate(): Promise<void> {
+    await this.downloadFile("/members/import-template", "plantilla-socios.xlsx");
+  }
+
+  async importMembers(file: File): Promise<MemberImportResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers = new Headers();
+    const token = this.getToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${this.baseUrl}/members/import`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    const json = (await response.json()) as ApiResponse<MemberImportResult>;
+    if (!response.ok || !json.success) {
+      const message =
+        !json.success && json.message
+          ? json.message
+          : `Request failed with status ${response.status}`;
+      throw new Error(message);
+    }
+    return json.data as MemberImportResult;
+  }
+
   async getMember(id: string): Promise<Member> {
     return this.request<Member>(`/members/${id}`);
   }
@@ -124,6 +165,41 @@ class ApiClient {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+  }
+
+  private async downloadFile(path: string, fallbackFilename: string): Promise<void> {
+    const headers = new Headers();
+    const token = this.getToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, { headers });
+    if (!response.ok) {
+      let message = `Request failed with status ${response.status}`;
+      try {
+        const json = (await response.json()) as ApiResponse<unknown>;
+        if (!json.success && json.message) {
+          message = json.message;
+        }
+      } catch {
+        // ignore non-JSON error bodies
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("Content-Disposition");
+    const matched = disposition?.match(/filename="?([^"]+)"?/i);
+    const filename = matched?.[1] ?? fallbackFilename;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
   private async request<T>(

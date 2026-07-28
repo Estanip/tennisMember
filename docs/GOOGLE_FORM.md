@@ -8,11 +8,11 @@ Alta automática de aspirantes desde el form
 Cada envío crea un socio con:
 
 - `condition` = `ABONADO_TENIS`
-- `status` = `2` (Pendiente)
+- `status` = `1` (Habilitado)
 - Campos: email, nombre, apellido, DNI, fecha de nacimiento, teléfono
 - La edad y la categoría (Adulto/Menor) se calculan al consultar (Menor = edad &lt; 14)
 
-El admin aprueba cambiando el estado a **Habilitado** en el backoffice.
+El socio queda habilitado al ingresar por el formulario.
 
 ## Endpoint
 

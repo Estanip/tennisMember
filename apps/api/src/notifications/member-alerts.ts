@@ -3,7 +3,7 @@ import { MEMBER_CONDITION_LABELS, MEMBER_STATUS_LABELS } from "@socios/shared";
 import { getLogger } from "../lib/logger.js";
 import { getEmailProvider } from "./email/factory.js";
 
-export type MemberCreatedSource = "APP" | "GOOGLE_FORM";
+export type MemberCreatedSource = "APP" | "GOOGLE_FORM" | "IMPORT";
 
 const log = getLogger("email");
 
@@ -21,7 +21,12 @@ export function buildNewMemberAlertContent(
 ): { subject: string; text: string; html: string } {
   const statusLabel = MEMBER_STATUS_LABELS[member.status] ?? String(member.status);
   const conditionLabel = MEMBER_CONDITION_LABELS[member.condition] ?? member.condition;
-  const sourceLabel = source === "GOOGLE_FORM" ? "Google Form" : "Backoffice";
+  const sourceLabel =
+    source === "GOOGLE_FORM"
+      ? "Google Form"
+      : source === "IMPORT"
+        ? "Importación Excel"
+        : "Backoffice";
 
   const subject = `[Socios] Nuevo socio: ${member.fullName}`;
   const text = [

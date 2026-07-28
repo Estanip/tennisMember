@@ -42,12 +42,12 @@ export class GoogleFormWebhookService {
         birthDate: payload.birthDate,
         phone,
         condition: MEMBER_CONDITIONS.ABONADO_TENIS,
-        status: MEMBER_STATUS.PENDING,
+        status: MEMBER_STATUS.ENABLED,
       },
       { source: "GOOGLE_FORM" },
     );
 
-    log.info({ memberId: member.id, email: member.email }, "Google Form member created as pending");
+    log.info({ memberId: member.id, email: member.email }, "Google Form member created as enabled");
     return member;
   }
 }

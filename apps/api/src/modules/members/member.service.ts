@@ -2,6 +2,9 @@ import type { MemberCondition, Prisma } from "@prisma/client";
 import type {
   CreateMemberRequest,
   DeleteMemberRequest,
+  MemberImportResult,
+  MemberImportRowIdentity,
+  MemberImportSkippedRow,
   MemberListQuery,
   PaginatedMembers,
   UpdateMemberRequest,
@@ -18,6 +21,7 @@ import {
   isValidOptionalMemberId,
   isValidOptionalMemberPhone,
   MEMBER_DELETE_REASONS,
+  MEMBER_EXCEL_HEADERS,
   MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_STATUS,
   normalizeMemberBirthDate,
@@ -35,10 +39,16 @@ import {
   type MemberCreatedSource,
   notifyAdminNewMember,
 } from "../../notifications/member-alerts.js";
+import {
+  buildMembersWorkbook,
+  type ParsedMemberImportRow,
+  parseMembersImportWorkbook,
+} from "./member-excel.js";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
+const MAX_EXPORT_ROWS = 10_000;
 
 const log = getLogger("members");
 
@@ -46,32 +56,7 @@ export class MemberService {
   async list(query: MemberListQuery): Promise<PaginatedMembers> {
     const page = Math.max(query.page ?? DEFAULT_PAGE, 1);
     const pageSize = Math.min(Math.max(query.pageSize ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
-
-    const where: Prisma.MemberWhereInput = {};
-
-    if (query.search?.trim()) {
-      const search = query.search.trim();
-      const dniSearch = normalizeMemberDni(search);
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search, mode: "insensitive" } },
-        { memberId: { contains: search, mode: "insensitive" } },
-        ...(dniSearch.length > 0 ? [{ dni: { contains: dniSearch } }] : []),
-      ];
-    }
-
-    if (query.condition) {
-      where.condition = query.condition as MemberCondition;
-    }
-
-    if (query.status !== undefined) {
-      if (!isMemberStatus(query.status)) {
-        throw new AppError("Invalid status filter", 400, "INVALID_STATUS");
-      }
-      where.status = query.status;
-    }
+    const where = this.buildListWhere(query);
 
     const [total, items] = await prisma.$transaction([
       prisma.member.count({ where }),
@@ -104,6 +89,62 @@ export class MemberService {
     };
   }
 
+  async exportWorkbook(query: MemberListQuery): Promise<Buffer> {
+    const where = this.buildListWhere(query);
+    const items = await prisma.member.findMany({
+      where,
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      take: MAX_EXPORT_ROWS,
+    });
+    log.info({ total: items.length, search: query.search }, "Exporting members workbook");
+    return buildMembersWorkbook(items.map(toMemberDto));
+  }
+
+  async importTemplateWorkbook(): Promise<Buffer> {
+    return buildMembersWorkbook([], { includeExampleRow: true });
+  }
+
+  async importFromExcel(buffer: Buffer): Promise<MemberImportResult> {
+    const parsedRows = await parseMembersImportWorkbook(buffer);
+    const skipped: MemberImportSkippedRow[] = [];
+    const restoredRows: MemberImportRowIdentity[] = [];
+    let created = 0;
+    let restored = 0;
+
+    for (const parsed of parsedRows) {
+      if ("error" in parsed) {
+        skipped.push({
+          row: parsed.row,
+          reason: parsed.error,
+          firstName: parsed.raw[MEMBER_EXCEL_HEADERS.firstName] || undefined,
+          lastName: parsed.raw[MEMBER_EXCEL_HEADERS.lastName] || undefined,
+          email: parsed.raw[MEMBER_EXCEL_HEADERS.email] || undefined,
+          dni: parsed.raw[MEMBER_EXCEL_HEADERS.dni] || undefined,
+          memberId: parsed.raw[MEMBER_EXCEL_HEADERS.memberId] || null,
+        });
+        continue;
+      }
+
+      const identity = this.rowIdentity(parsed);
+      try {
+        const outcome = await this.importOneRow(parsed);
+        if (outcome === "created") {
+          created += 1;
+        } else if (outcome === "restored") {
+          restored += 1;
+          restoredRows.push(identity);
+        }
+      } catch (err) {
+        const reason = err instanceof AppError ? err.message : "No se pudo importar la fila";
+        skipped.push({ ...identity, reason });
+      }
+    }
+
+    log.info({ created, restored, skipped: skipped.length }, "Member Excel import finished");
+
+    return { created, restored, skipped, restoredRows };
+  }
+
   async getById(id: string) {
     const member = await prisma.member.findFirst({
       where: { id, deletedAt: null },
@@ -118,7 +159,10 @@ export class MemberService {
     return toMemberDto(member);
   }
 
-  async create(input: CreateMemberRequest, options: { source?: MemberCreatedSource } = {}) {
+  async create(
+    input: CreateMemberRequest,
+    options: { source?: MemberCreatedSource; notify?: boolean } = {},
+  ) {
     this.assertValidStatus(input.status);
     const firstName = this.assertValidNamePart(input.firstName, "first name");
     const lastName = this.assertValidNamePart(input.lastName, "last name");
@@ -127,6 +171,7 @@ export class MemberService {
     const birthDate = this.assertValidBirthDate(input.birthDate);
     const memberId = this.resolveMemberId(input.memberId);
     const source = options.source ?? "APP";
+    const notify = options.notify !== false;
 
     const existingByEmail = await prisma.member.findFirst({
       where: { email },
@@ -170,7 +215,9 @@ export class MemberService {
         { memberId: dto.id, externalMemberId: memberId, email, dni, source, restored: true },
         "Member restored via create (previously deleted)",
       );
-      void notifyAdminNewMember(dto, source);
+      if (notify) {
+        void notifyAdminNewMember(dto, source);
+      }
       return dto;
     }
 
@@ -201,7 +248,9 @@ export class MemberService {
       },
       "Member created",
     );
-    void notifyAdminNewMember(dto, source);
+    if (notify) {
+      void notifyAdminNewMember(dto, source);
+    }
     return dto;
   }
 
@@ -394,6 +443,130 @@ export class MemberService {
       log.warn({ externalMemberId: memberId }, "External member id already in use");
       throw new AppError("External member id already in use", 409, "MEMBER_ID_TAKEN");
     }
+  }
+
+  private buildListWhere(query: MemberListQuery): Prisma.MemberWhereInput {
+    const where: Prisma.MemberWhereInput = {};
+
+    if (query.search?.trim()) {
+      const search = query.search.trim();
+      const dniSearch = normalizeMemberDni(search);
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search, mode: "insensitive" } },
+        { memberId: { contains: search, mode: "insensitive" } },
+        ...(dniSearch.length > 0 ? [{ dni: { contains: dniSearch } }] : []),
+      ];
+    }
+
+    if (query.condition) {
+      where.condition = query.condition as MemberCondition;
+    }
+
+    if (query.status !== undefined) {
+      if (!isMemberStatus(query.status)) {
+        throw new AppError("Invalid status filter", 400, "INVALID_STATUS");
+      }
+      where.status = query.status;
+    }
+
+    return where;
+  }
+
+  private rowIdentity(row: ParsedMemberImportRow): MemberImportRowIdentity {
+    return {
+      row: row.row,
+      firstName: row.firstName || undefined,
+      lastName: row.lastName || undefined,
+      email: row.email || undefined,
+      dni: row.dni || undefined,
+      memberId: row.memberId,
+    };
+  }
+
+  private async importOneRow(row: ParsedMemberImportRow): Promise<"created" | "restored"> {
+    const firstName = this.assertValidNamePart(row.firstName, "first name");
+    const lastName = this.assertValidNamePart(row.lastName, "last name");
+    const email = this.assertValidEmail(row.email);
+    const dni = this.assertValidDni(row.dni);
+    const birthDate = this.assertValidBirthDate(row.birthDate);
+    const memberId = this.resolveMemberId(row.memberId);
+    const phone = normalizePhone(row.phone);
+    this.assertValidStatus(row.status);
+
+    const orClauses: Prisma.MemberWhereInput[] = [{ email }, { dni }];
+    if (memberId) {
+      orClauses.push({ memberId });
+    }
+
+    const activeMatches = await prisma.member.findMany({
+      where: { deletedAt: null, OR: orClauses },
+    });
+
+    if (activeMatches.length > 0) {
+      const reasons: string[] = [];
+      if (activeMatches.some((m) => m.email === email)) {
+        reasons.push("Email ya existe");
+      }
+      if (activeMatches.some((m) => m.dni === dni)) {
+        reasons.push("DNI ya existe");
+      }
+      if (memberId && activeMatches.some((m) => m.memberId === memberId)) {
+        reasons.push("Nro. Socio ya existe");
+      }
+      throw new AppError(reasons.join("; ") || "Socio ya existe", 409, "MEMBER_EXISTS");
+    }
+
+    const deletedMatches = await prisma.member.findMany({
+      where: { deletedAt: { not: null }, OR: orClauses },
+    });
+    const deletedIds = [...new Set(deletedMatches.map((m) => m.id))];
+
+    if (deletedIds.length > 1) {
+      throw new AppError(
+        "Coincide con más de un socio eliminado (email/DNI/Nro. Socio apuntan a registros distintos)",
+        409,
+        "IMPORT_DELETED_CONFLICT",
+      );
+    }
+
+    if (deletedIds.length === 1) {
+      await prisma.member.update({
+        where: { id: deletedIds[0] },
+        data: {
+          firstName,
+          lastName,
+          email,
+          dni,
+          birthDate,
+          phone,
+          memberId,
+          condition: row.condition,
+          status: row.status,
+          deletedAt: null,
+          deletedReason: null,
+          deletedReasonDetail: null,
+        },
+      });
+      return "restored";
+    }
+
+    await prisma.member.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        dni,
+        birthDate,
+        phone,
+        memberId,
+        condition: row.condition,
+        status: row.status,
+      },
+    });
+    return "created";
   }
 }
 

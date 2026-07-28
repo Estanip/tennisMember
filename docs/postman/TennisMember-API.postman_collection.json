@@ -297,7 +297,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "webhooks", "google-form"]
             },
-            "description": "Alta automática de Abonado Tenis en estado Pendiente (status=2).\nAutenticación por header `X-Webhook-Secret` (no JWT)."
+            "description": "Alta automática de Abonado Tenis en estado Habilitado (status=1).\nAutenticación por header `X-Webhook-Secret` (no JWT)."
           },
           "response": []
         }

@@ -4,6 +4,7 @@ import type {
   Member,
   MemberCondition,
   MemberDeleteReason,
+  MemberImportResult,
   MemberStatus,
   PaginatedMembers,
 } from "@socios/shared";
@@ -21,7 +22,7 @@ import {
   MEMBER_STATUS_VALUES,
 } from "@socios/shared";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api-client";
@@ -42,6 +43,27 @@ function formatDeleteReason(member: Member): string | null {
   return label;
 }
 
+function formatImportIdentity(row: {
+  row: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  dni?: string;
+  memberId?: string | null;
+  reason?: string;
+}): string {
+  const name = [row.firstName, row.lastName].filter(Boolean).join(" ") || "—";
+  const parts = [
+    `Fila ${row.row}`,
+    name,
+    row.dni ? `DNI ${row.dni}` : null,
+    row.email ?? null,
+    row.memberId ? `Nro. Socio ${row.memberId}` : null,
+    row.reason ?? null,
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
 export default function MembersPage() {
   const { isAdmin } = useAuth();
   const [data, setData] = useState<PaginatedMembers | null>(null);
@@ -57,6 +79,11 @@ export default function MembersPage() {
   );
   const [deleteDetail, setDeleteDetail] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<MemberImportResult | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,15 +162,89 @@ export default function MembersPage() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    setError(null);
+    try {
+      await apiClient.exportMembers({
+        search: search.trim() || undefined,
+        condition: condition || undefined,
+        status: status === "" ? undefined : (Number(status) as MemberStatus),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo exportar");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  function openImportModal() {
+    if (!isAdmin) return;
+    setImportOpen(true);
+    setImportResult(null);
+    setError(null);
+    if (importInputRef.current) {
+      importInputRef.current.value = "";
+    }
+  }
+
+  function closeImportModal() {
+    if (importing) return;
+    setImportOpen(false);
+    setImportResult(null);
+  }
+
+  async function handleDownloadTemplate() {
+    setError(null);
+    try {
+      await apiClient.downloadMemberImportTemplate();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo descargar la plantilla");
+    }
+  }
+
+  async function handleImportFile(file: File | undefined) {
+    if (!isAdmin || !file) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const result = await apiClient.importMembers(file);
+      setImportResult(result);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo importar");
+    } finally {
+      setImporting(false);
+      if (importInputRef.current) {
+        importInputRef.current.value = "";
+      }
+    }
+  }
+
   return (
     <AppShell
       title="Socios"
       actions={
-        isAdmin ? (
-          <Link className="btn" href="/members/new">
-            Nuevo socio
-          </Link>
-        ) : null
+        <div className="actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void handleExport()}
+            disabled={exporting}
+          >
+            {exporting ? "Exportando..." : "Exportar Excel"}
+          </button>
+          {isAdmin ? (
+            <>
+              <button type="button" className="btn btn-secondary" onClick={openImportModal}>
+                Importar Excel
+              </button>
+              <Link className="btn" href="/members/new">
+                Nuevo socio
+              </Link>
+            </>
+          ) : null}
+        </div>
       }
     >
       <section className="card stack">
@@ -348,21 +449,19 @@ export default function MembersPage() {
                 ))}
               </select>
             </div>
-            {deleteReason === MEMBER_DELETE_REASONS.OTRA ? (
-              <div className="field">
-                <label htmlFor="delete-detail">Detalle</label>
-                <textarea
-                  id="delete-detail"
-                  rows={3}
-                  maxLength={MEMBER_DELETE_REASON_DETAIL_MAX_LENGTH}
-                  value={deleteDetail}
-                  onChange={(e) => setDeleteDetail(e.target.value)}
-                  disabled={deleting}
-                  placeholder="Explicá el motivo"
-                  required
-                />
-              </div>
-            ) : null}
+            <div className="field">
+              <label htmlFor="delete-detail">
+                Detalle{deleteReason === MEMBER_DELETE_REASONS.OTRA ? " (obligatorio)" : ""}
+              </label>
+              <textarea
+                id="delete-detail"
+                value={deleteDetail}
+                maxLength={MEMBER_DELETE_REASON_DETAIL_MAX_LENGTH}
+                onChange={(e) => setDeleteDetail(e.target.value)}
+                disabled={deleting}
+                rows={3}
+              />
+            </div>
             <div className="actions">
               <button
                 type="button"
@@ -378,7 +477,96 @@ export default function MembersPage() {
                 onClick={() => void confirmDelete()}
                 disabled={deleting}
               >
-                {deleting ? "Eliminando..." : "Confirmar eliminación"}
+                {deleting ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {importOpen ? (
+        <div className="modal-root">
+          <button
+            type="button"
+            className="modal-backdrop"
+            aria-label="Cerrar diálogo"
+            onClick={closeImportModal}
+            disabled={importing}
+          />
+          <div
+            className="modal card stack"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-members-title"
+          >
+            <h2 id="import-members-title">
+              {importResult ? "Resultado de importación" : "Importar socios"}
+            </h2>
+
+            {!importResult ? (
+              <>
+                <p className="muted">
+                  Descargá la plantilla, completá las filas y subí el archivo `.xlsx`. El estado por
+                  defecto es Habilitado. No se envían mails de alerta.
+                </p>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => void handleDownloadTemplate()}
+                    disabled={importing}
+                  >
+                    Descargar plantilla
+                  </button>
+                </div>
+                <div className="field">
+                  <label htmlFor="import-file">Archivo Excel</label>
+                  <input
+                    id="import-file"
+                    ref={importInputRef}
+                    type="file"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    disabled={importing}
+                    onChange={(e) => void handleImportFile(e.target.files?.[0])}
+                  />
+                </div>
+                {importing ? <p className="muted">Importando...</p> : null}
+              </>
+            ) : (
+              <>
+                <p>
+                  Se cargaron <strong>{importResult.created}</strong> socios correctamente
+                  {importResult.restored > 0
+                    ? ` y se reactivaron ${importResult.restored} que estaban eliminados`
+                    : ""}
+                  .
+                </p>
+                {importResult.restoredRows.length > 0 ? (
+                  <div className="stack">
+                    <p className="muted">Reactivados (estaban eliminados):</p>
+                    <ul>
+                      {importResult.restoredRows.map((row) => (
+                        <li key={`restored-${row.row}`}>{formatImportIdentity(row)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {importResult.skipped.length > 0 ? (
+                  <div className="stack">
+                    <p className="muted">A excepción de (no se cargaron):</p>
+                    <ul>
+                      {importResult.skipped.map((row) => (
+                        <li key={`skipped-${row.row}`}>{formatImportIdentity(row)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            <div className="actions">
+              <button type="button" className="btn" onClick={closeImportModal} disabled={importing}>
+                Cerrar
               </button>
             </div>
           </div>

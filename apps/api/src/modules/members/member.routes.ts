@@ -7,6 +7,7 @@ import {
   MEMBER_STATUS_VALUES,
 } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
+import { AppError } from "../../lib/errors.js";
 import { MemberService } from "./member.service.js";
 
 const memberSchema = {
@@ -218,6 +219,146 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
         condition: query.condition as never,
         status: query.status as never,
       });
+      return reply.send({ success: true, data });
+    },
+  );
+
+  app.get(
+    "/members/export",
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        tags: ["Members"],
+        summary: "Export members to Excel (.xlsx) using current filters",
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            search: { type: "string" },
+            condition: {
+              type: "string",
+              enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
+            },
+            status: { type: "integer", enum: [...MEMBER_STATUS_VALUES] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const query = request.query as {
+        search?: string;
+        condition?: string;
+        status?: number;
+      };
+      const buffer = await memberService.exportWorkbook({
+        search: query.search,
+        condition: query.condition as never,
+        status: query.status as never,
+      });
+      return reply
+        .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .header("Content-Disposition", 'attachment; filename="socios.xlsx"')
+        .send(buffer);
+    },
+  );
+
+  app.get(
+    "/members/import-template",
+    {
+      preHandler: [app.requireMemberWrite],
+      schema: {
+        tags: ["Members"],
+        summary: "Download Excel import template",
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    async (_request, reply) => {
+      const buffer = await memberService.importTemplateWorkbook();
+      return reply
+        .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .header("Content-Disposition", 'attachment; filename="plantilla-socios.xlsx"')
+        .send(buffer);
+    },
+  );
+
+  app.post(
+    "/members/import",
+    {
+      preHandler: [app.requireMemberWrite],
+      schema: {
+        tags: ["Members"],
+        summary: "Import members from Excel (.xlsx)",
+        security: [{ bearerAuth: [] }],
+        consumes: ["multipart/form-data"],
+        response: {
+          200: {
+            type: "object",
+            required: ["success", "data"],
+            additionalProperties: false,
+            properties: {
+              success: { type: "boolean" },
+              data: {
+                type: "object",
+                required: ["created", "restored", "skipped", "restoredRows"],
+                additionalProperties: false,
+                properties: {
+                  created: { type: "integer" },
+                  restored: { type: "integer" },
+                  skipped: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["row", "reason"],
+                      additionalProperties: false,
+                      properties: {
+                        row: { type: "integer" },
+                        reason: { type: "string" },
+                        firstName: { type: "string" },
+                        lastName: { type: "string" },
+                        email: { type: "string" },
+                        dni: { type: "string" },
+                        memberId: { type: ["string", "null"] },
+                      },
+                    },
+                  },
+                  restoredRows: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["row"],
+                      additionalProperties: false,
+                      properties: {
+                        row: { type: "integer" },
+                        firstName: { type: "string" },
+                        lastName: { type: "string" },
+                        email: { type: "string" },
+                        dni: { type: "string" },
+                        memberId: { type: ["string", "null"] },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const file = await request.file();
+      if (!file) {
+        throw new AppError("Se requiere un archivo Excel (.xlsx)", 400, "FILE_REQUIRED");
+      }
+      const filename = file.filename.toLowerCase();
+      if (!filename.endsWith(".xlsx")) {
+        throw new AppError("El archivo debe ser .xlsx", 400, "INVALID_FILE_TYPE");
+      }
+      const buffer = await file.toBuffer();
+      const data = await memberService.importFromExcel(buffer);
       return reply.send({ success: true, data });
     },
   );
