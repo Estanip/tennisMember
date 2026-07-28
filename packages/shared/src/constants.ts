@@ -135,6 +135,25 @@ export function getMemberStatusLabel(status: number): string {
 export const MEMBER_PHONE_LENGTH = 10;
 export const MEMBER_PHONE_PATTERN = /^\d{10}$/;
 
+/** External member id from legacy/other DB (free-form string). */
+export const MEMBER_EXTERNAL_ID_MAX_LENGTH = 64;
+
+export function normalizeOptionalMemberId(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function isValidOptionalMemberId(value: string | null | undefined): boolean {
+  const normalized = normalizeOptionalMemberId(value);
+  if (normalized === null) {
+    return true;
+  }
+  return normalized.length <= MEMBER_EXTERNAL_ID_MAX_LENGTH;
+}
+
 export function normalizeOptionalPhone(phone: string | null | undefined): string | null {
   if (phone === undefined || phone === null) {
     return null;

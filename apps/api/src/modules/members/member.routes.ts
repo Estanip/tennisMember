@@ -3,6 +3,7 @@ import {
   MEMBER_CONDITIONS,
   MEMBER_DELETE_REASON_VALUES,
   MEMBER_EDITABLE_STATUS_VALUES,
+  MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_STATUS_VALUES,
 } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
@@ -12,6 +13,7 @@ const memberSchema = {
   type: "object",
   required: [
     "id",
+    "memberId",
     "firstName",
     "lastName",
     "fullName",
@@ -31,6 +33,7 @@ const memberSchema = {
   additionalProperties: false,
   properties: {
     id: { type: "string" },
+    memberId: { type: ["string", "null"] },
     firstName: { type: "string" },
     lastName: { type: "string" },
     fullName: { type: "string" },
@@ -86,6 +89,13 @@ const createBodySchema = {
         { type: "string", maxLength: 0 },
       ],
     },
+    memberId: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", minLength: 1, maxLength: MEMBER_EXTERNAL_ID_MAX_LENGTH },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     condition: {
       type: "string",
       enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
@@ -106,6 +116,13 @@ const updateBodySchema = {
       anyOf: [
         { type: "null" },
         { type: "string", pattern: "^\\d{10}$" },
+        { type: "string", maxLength: 0 },
+      ],
+    },
+    memberId: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", minLength: 1, maxLength: MEMBER_EXTERNAL_ID_MAX_LENGTH },
         { type: "string", maxLength: 0 },
       ],
     },

@@ -152,7 +152,7 @@ export default function MembersPage() {
             <label htmlFor="search">Búsqueda</label>
             <input
               id="search"
-              placeholder="Nombre, apellido, email, DNI o teléfono"
+              placeholder="Nombre, apellido, email, DNI, teléfono o Nro. Socio"
               value={search}
               onChange={(e) => {
                 setPage(1);
@@ -209,6 +209,7 @@ export default function MembersPage() {
                   <tr>
                     <th>Apellido</th>
                     <th>Nombre</th>
+                    <th>Nro. Socio</th>
                     <th>DNI</th>
                     <th>Email</th>
                     <th>Edad</th>
@@ -222,7 +223,7 @@ export default function MembersPage() {
                 <tbody>
                   {data.items.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 10 : 9} className="muted">
+                      <td colSpan={isAdmin ? 11 : 10} className="muted">
                         No hay socios para mostrar
                       </td>
                     </tr>
@@ -234,6 +235,7 @@ export default function MembersPage() {
                         <tr key={member.id} className={isDeleted ? "row-deleted" : undefined}>
                           <td>{member.lastName}</td>
                           <td>{member.firstName}</td>
+                          <td>{member.memberId ?? "—"}</td>
                           <td>{member.dni}</td>
                           <td>{member.email}</td>
                           <td>{member.age}</td>

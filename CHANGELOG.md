@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Helpers de permisos en `@socios/shared` (`canManageMembers`, `canManageUsers`)
 - Seed: `superadmin@alem.com` (SUPER_ADMIN)
 - Username opcional y único en usuarios; login con email o username (`identifier`)
+- `memberId` opcional y único en socios (columna SQL `member_id`; id externo de otra DB)
 
 ### Changed
 

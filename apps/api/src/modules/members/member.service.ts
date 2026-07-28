@@ -15,13 +15,16 @@ import {
   isValidMemberDni,
   isValidMemberEmail,
   isValidMemberNamePart,
+  isValidOptionalMemberId,
   isValidOptionalMemberPhone,
   MEMBER_DELETE_REASONS,
+  MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_STATUS,
   normalizeMemberBirthDate,
   normalizeMemberDni,
   normalizeMemberEmail,
   normalizeMemberNamePart,
+  normalizeOptionalMemberId,
   normalizeOptionalPhone,
 } from "@socios/shared";
 import { AppError } from "../../lib/errors.js";
@@ -54,6 +57,7 @@ export class MemberService {
         { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
         { phone: { contains: search, mode: "insensitive" } },
+        { memberId: { contains: search, mode: "insensitive" } },
         ...(dniSearch.length > 0 ? [{ dni: { contains: dniSearch } }] : []),
       ];
     }
@@ -121,11 +125,14 @@ export class MemberService {
     const email = this.assertValidEmail(input.email);
     const dni = this.assertValidDni(input.dni);
     const birthDate = this.assertValidBirthDate(input.birthDate);
+    const memberId = this.resolveMemberId(input.memberId);
     const source = options.source ?? "APP";
 
     const existingByEmail = await prisma.member.findFirst({
       where: { email },
     });
+
+    await this.assertMemberIdAvailable(memberId, existingByEmail?.id);
 
     if (existingByEmail && !existingByEmail.deletedAt) {
       log.warn({ email, source }, "Create member rejected: email taken");
@@ -150,6 +157,7 @@ export class MemberService {
           dni,
           birthDate,
           phone: normalizePhone(input.phone),
+          memberId,
           condition: input.condition,
           status: input.status,
           deletedAt: null,
@@ -159,7 +167,7 @@ export class MemberService {
       });
       const dto = toMemberDto(restored);
       log.info(
-        { memberId: dto.id, email, dni, source, restored: true },
+        { memberId: dto.id, externalMemberId: memberId, email, dni, source, restored: true },
         "Member restored via create (previously deleted)",
       );
       void notifyAdminNewMember(dto, source);
@@ -174,6 +182,7 @@ export class MemberService {
         dni,
         birthDate,
         phone: normalizePhone(input.phone),
+        memberId,
         condition: input.condition,
         status: input.status,
       },
@@ -181,7 +190,15 @@ export class MemberService {
 
     const dto = toMemberDto(member);
     log.info(
-      { memberId: dto.id, email, dni, source, status: dto.status, condition: dto.condition },
+      {
+        memberId: dto.id,
+        externalMemberId: memberId,
+        email,
+        dni,
+        source,
+        status: dto.status,
+        condition: dto.condition,
+      },
       "Member created",
     );
     void notifyAdminNewMember(dto, source);
@@ -217,6 +234,12 @@ export class MemberService {
     const birthDate =
       input.birthDate !== undefined ? this.assertValidBirthDate(input.birthDate) : undefined;
 
+    let externalMemberId: string | null | undefined;
+    if (input.memberId !== undefined) {
+      externalMemberId = this.resolveMemberId(input.memberId);
+      await this.assertMemberIdAvailable(externalMemberId, id);
+    }
+
     const updated = await prisma.member.update({
       where: { id },
       data: {
@@ -231,6 +254,7 @@ export class MemberService {
         dni,
         birthDate,
         phone: input.phone !== undefined ? normalizePhone(input.phone) : undefined,
+        memberId: externalMemberId,
         condition: input.condition,
         status: input.status,
       },
@@ -343,6 +367,33 @@ export class MemberService {
       );
     }
     return new Date(`${iso}T00:00:00.000Z`);
+  }
+
+  private resolveMemberId(value: string | null | undefined): string | null {
+    const normalized = normalizeOptionalMemberId(value);
+    if (!isValidOptionalMemberId(normalized)) {
+      throw new AppError(
+        `External member id must be at most ${MEMBER_EXTERNAL_ID_MAX_LENGTH} characters`,
+        400,
+        "INVALID_MEMBER_ID",
+      );
+    }
+    return normalized;
+  }
+
+  private async assertMemberIdAvailable(
+    memberId: string | null,
+    excludeMemberId?: string,
+  ): Promise<void> {
+    if (!memberId) {
+      return;
+    }
+
+    const existing = await prisma.member.findUnique({ where: { memberId } });
+    if (existing && existing.id !== excludeMemberId) {
+      log.warn({ externalMemberId: memberId }, "External member id already in use");
+      throw new AppError("External member id already in use", 409, "MEMBER_ID_TAKEN");
+    }
   }
 }
 

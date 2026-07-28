@@ -23,6 +23,7 @@ export function toMemberDto(member: Member): SharedMember {
 
   return {
     id: member.id,
+    memberId: member.memberId,
     firstName: member.firstName,
     lastName: member.lastName,
     fullName: formatMemberFullName(member.firstName, member.lastName),

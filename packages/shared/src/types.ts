@@ -40,6 +40,8 @@ export interface LoginResponse {
 
 export interface Member {
   id: string;
+  /** External id from legacy/other DB; unique when set */
+  memberId: string | null;
   firstName: string;
   lastName: string;
   /** Derived: "{firstName} {lastName}" */
@@ -69,6 +71,8 @@ export interface CreateMemberRequest {
   /** ISO YYYY-MM-DD or dd/mm/yyyy */
   birthDate: string;
   phone?: string | null;
+  /** External id; optional and unique when set */
+  memberId?: string | null;
   condition: MemberCondition;
   status: MemberStatus;
 }
@@ -80,6 +84,8 @@ export interface UpdateMemberRequest {
   /** ISO YYYY-MM-DD or dd/mm/yyyy */
   birthDate?: string;
   phone?: string | null;
+  /** External id; optional and unique when set */
+  memberId?: string | null;
   condition?: MemberCondition;
   status?: MemberStatus;
 }

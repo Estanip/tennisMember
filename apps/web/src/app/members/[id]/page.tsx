@@ -46,6 +46,7 @@ export default function EditMemberPage() {
       dni: values.dni,
       birthDate: values.birthDate,
       phone: values.phone,
+      memberId: values.memberId,
       condition: values.condition,
       status: values.status,
     });

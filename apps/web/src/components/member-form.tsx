@@ -6,11 +6,13 @@ import {
   isValidMemberDni,
   isValidMemberEmail,
   isValidMemberNamePart,
+  isValidOptionalMemberId,
   isValidOptionalMemberPhone,
   MEMBER_CONDITION_LABELS,
   MEMBER_CONDITIONS,
   MEMBER_DNI_MAX_LENGTH,
   MEMBER_EDITABLE_STATUS_VALUES,
+  MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_NAME_PART_MAX_LENGTH,
   MEMBER_NAME_PART_MIN_LENGTH,
   MEMBER_PHONE_LENGTH,
@@ -20,6 +22,7 @@ import {
   normalizeMemberDni,
   normalizeMemberEmail,
   normalizeMemberNamePart,
+  normalizeOptionalMemberId,
   normalizeOptionalPhone,
 } from "@socios/shared";
 import { type FormEvent, useState } from "react";
@@ -31,6 +34,7 @@ interface MemberFormProps {
     birthDate?: string;
     firstName?: string;
     lastName?: string;
+    memberId?: string | null;
   };
   emailReadOnly?: boolean;
   submitLabel: string;
@@ -49,6 +53,7 @@ export function MemberForm({
   const [dni, setDni] = useState(initial?.dni ?? "");
   const [birthDate, setBirthDate] = useState(initial?.birthDate ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [memberId, setMemberId] = useState(initial?.memberId ?? "");
   const [condition, setCondition] = useState<MemberCondition>(
     initial?.condition ?? MEMBER_CONDITIONS.SOCIO_REGULAR,
   );
@@ -109,6 +114,13 @@ export function MemberForm({
       return;
     }
 
+    const normalizedMemberId = normalizeOptionalMemberId(memberId);
+    if (!isValidOptionalMemberId(normalizedMemberId)) {
+      setError(`El Nro. Socio no puede superar ${MEMBER_EXTERNAL_ID_MAX_LENGTH} caracteres`);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       await onSubmit({
         firstName: normalizedFirstName,
@@ -117,6 +129,7 @@ export function MemberForm({
         dni: normalizedDni,
         birthDate: normalizedBirthDate,
         phone: normalizedPhone,
+        memberId: normalizedMemberId,
         condition,
         status,
       });
@@ -214,6 +227,20 @@ export function MemberForm({
             }
           />
         </div>
+      </div>
+      <div className="field">
+        <label htmlFor="memberId">Nro. Socio (opcional)</label>
+        <input
+          id="memberId"
+          value={memberId}
+          onChange={(e) => setMemberId(e.target.value.slice(0, MEMBER_EXTERNAL_ID_MAX_LENGTH))}
+          maxLength={MEMBER_EXTERNAL_ID_MAX_LENGTH}
+          autoComplete="off"
+          placeholder="Número de socio en el sistema legado"
+        />
+        <p className="muted">
+          Referencia única al nro. de socio en otra base (máx. {MEMBER_EXTERNAL_ID_MAX_LENGTH})
+        </p>
       </div>
       <div className="row">
         <div className="field">

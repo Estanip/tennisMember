@@ -40,6 +40,8 @@ model User {
 
 model Member {
   id        String          @id @default(cuid())
+  /// External id from legacy/other DB; unique when set
+  memberId  String?         @unique @map("member_id")
   firstName String
   lastName  String
   email     String          @unique
