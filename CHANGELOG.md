@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Web: topbar y layout mobile sin scroll horizontal (marca corta, nav en 2 filas, usuario oculto en pantallas chicas)
 - Railway: builder `NIXPACKS` → `RAILPACK` en `railway.api.toml` y `railway.web.toml`
 - Railway: `YARN_PRODUCTION=false` en build para no omitir `devDependencies` bajo `NODE_ENV=production`
 - API: `typescript` y `@types/node` pasan a `dependencies` (necesarios para `tsc` en Railway)

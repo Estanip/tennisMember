@@ -37,14 +37,15 @@ export function AppShell({
     <div className="app-shell">
       <header className="topbar">
         <Link href="/members" className="brand">
-          Socios Backoffice
+          <span className="brand-full">Socios Backoffice</span>
+          <span className="brand-short">Socios</span>
         </Link>
-        <nav className="topbar-nav">
+        <nav className="topbar-nav" aria-label="Principal">
           <Link href="/members">Socios</Link>
           {user.role === USER_ROLES.SUPER_ADMIN ? <Link href="/users">Usuarios</Link> : null}
         </nav>
         <div className="topbar-actions">
-          <span>
+          <span className="topbar-user" title={`${user.name} · ${USER_ROLE_LABELS[user.role]}`}>
             {user.name} · {USER_ROLE_LABELS[user.role]}
           </span>
           <ThemeToggle />
@@ -63,7 +64,7 @@ export function AppShell({
       <main className="container">
         <div className="page-header">
           <h1>{title}</h1>
-          {actions}
+          {actions ? <div className="page-header-actions">{actions}</div> : null}
         </div>
         {children}
       </main>
