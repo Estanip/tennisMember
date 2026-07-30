@@ -43,6 +43,7 @@ export default function EditMemberPage() {
     await apiClient.updateMember(params.id, {
       firstName: values.firstName,
       lastName: values.lastName,
+      email: values.email,
       dni: values.dni,
       birthDate: values.birthDate,
       phone: values.phone,
@@ -58,12 +59,7 @@ export default function EditMemberPage() {
       {error ? <p className="error">{error}</p> : null}
       {!member && !error ? <p className="muted">Cargando...</p> : null}
       {member ? (
-        <MemberForm
-          emailReadOnly
-          submitLabel="Guardar cambios"
-          initial={member}
-          onSubmit={handleUpdate}
-        />
+        <MemberForm submitLabel="Guardar cambios" initial={member} onSubmit={handleUpdate} />
       ) : null}
     </AppShell>
   );

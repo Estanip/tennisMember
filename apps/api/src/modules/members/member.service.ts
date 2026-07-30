@@ -16,8 +16,8 @@ import {
   isValidMemberBirthDate,
   isValidMemberDeleteReasonDetail,
   isValidMemberDni,
-  isValidMemberEmail,
   isValidMemberNamePart,
+  isValidOptionalMemberEmail,
   isValidOptionalMemberId,
   isValidOptionalMemberPhone,
   MEMBER_DELETE_REASONS,
@@ -26,8 +26,8 @@ import {
   MEMBER_STATUS,
   normalizeMemberBirthDate,
   normalizeMemberDni,
-  normalizeMemberEmail,
   normalizeMemberNamePart,
+  normalizeOptionalMemberEmail,
   normalizeOptionalMemberId,
   normalizeOptionalPhone,
 } from "@socios/shared";
@@ -166,18 +166,15 @@ export class MemberService {
     this.assertValidStatus(input.status);
     const firstName = this.assertValidNamePart(input.firstName, "first name");
     const lastName = this.assertValidNamePart(input.lastName, "last name");
-    const email = this.assertValidEmail(input.email);
+    const email = this.resolveOptionalEmail(input.email);
     const dni = this.assertValidDni(input.dni);
     const birthDate = this.assertValidBirthDate(input.birthDate);
     const memberId = this.resolveMemberId(input.memberId);
+    const phone = normalizePhone(input.phone);
     const source = options.source ?? "APP";
     const notify = options.notify !== false;
 
-    const existingByEmail = await prisma.member.findFirst({
-      where: { email },
-    });
-
-    await this.assertMemberIdAvailable(memberId, existingByEmail?.id);
+    const existingByEmail = email ? await prisma.member.findFirst({ where: { email } }) : null;
 
     if (existingByEmail && !existingByEmail.deletedAt) {
       log.warn({ email, source }, "Create member rejected: email taken");
@@ -188,20 +185,44 @@ export class MemberService {
       where: { dni },
     });
 
-    if (existingByDni && existingByDni.id !== existingByEmail?.id) {
-      log.warn({ dni, source }, "Create member rejected: DNI taken");
-      throw new AppError("DNI already in use", 409, "DNI_TAKEN");
+    if (existingByDni && !existingByDni.deletedAt) {
+      if (!existingByEmail || existingByDni.id !== existingByEmail.id) {
+        log.warn({ dni, source }, "Create member rejected: DNI taken");
+        throw new AppError("DNI already in use", 409, "DNI_TAKEN");
+      }
     }
 
-    if (existingByEmail?.deletedAt) {
+    const restoreTarget = existingByEmail?.deletedAt
+      ? existingByEmail
+      : existingByDni?.deletedAt
+        ? existingByDni
+        : null;
+
+    if (
+      existingByEmail?.deletedAt &&
+      existingByDni?.deletedAt &&
+      existingByEmail.id !== existingByDni.id
+    ) {
+      log.warn({ email, dni, source }, "Create member rejected: deleted email/DNI conflict");
+      throw new AppError(
+        "Email and DNI match different deleted members",
+        409,
+        "CREATE_DELETED_CONFLICT",
+      );
+    }
+
+    await this.assertMemberIdAvailable(memberId, restoreTarget?.id);
+
+    if (restoreTarget) {
       const restored = await prisma.member.update({
-        where: { id: existingByEmail.id },
+        where: { id: restoreTarget.id },
         data: {
           firstName,
           lastName,
+          email,
           dni,
           birthDate,
-          phone: normalizePhone(input.phone),
+          phone,
           memberId,
           condition: input.condition,
           status: input.status,
@@ -228,7 +249,7 @@ export class MemberService {
         email,
         dni,
         birthDate,
-        phone: normalizePhone(input.phone),
+        phone,
         memberId,
         condition: input.condition,
         status: input.status,
@@ -268,6 +289,20 @@ export class MemberService {
       this.assertValidStatus(input.status);
     }
 
+    let email: string | null | undefined;
+    if (input.email !== undefined) {
+      email = this.resolveOptionalEmail(input.email);
+      if (email) {
+        const taken = await prisma.member.findFirst({
+          where: { email, NOT: { id } },
+        });
+        if (taken) {
+          log.warn({ memberId: id, email }, "Update rejected: email taken");
+          throw new AppError("Email already in use", 409, "EMAIL_TAKEN");
+        }
+      }
+    }
+
     let dni: string | undefined;
     if (input.dni !== undefined) {
       dni = this.assertValidDni(input.dni);
@@ -300,6 +335,7 @@ export class MemberService {
           input.lastName !== undefined
             ? this.assertValidNamePart(input.lastName, "last name")
             : undefined,
+        email,
         dni,
         birthDate,
         phone: input.phone !== undefined ? normalizePhone(input.phone) : undefined,
@@ -390,9 +426,9 @@ export class MemberService {
     return normalized;
   }
 
-  private assertValidEmail(email: string): string {
-    const normalized = normalizeMemberEmail(email);
-    if (!isValidMemberEmail(normalized)) {
+  private resolveOptionalEmail(value: string | null | undefined): string | null {
+    const normalized = normalizeOptionalMemberEmail(value);
+    if (!isValidOptionalMemberEmail(normalized)) {
       throw new AppError("Invalid email address", 400, "INVALID_EMAIL");
     }
     return normalized;
@@ -489,14 +525,17 @@ export class MemberService {
   private async importOneRow(row: ParsedMemberImportRow): Promise<"created" | "restored"> {
     const firstName = this.assertValidNamePart(row.firstName, "first name");
     const lastName = this.assertValidNamePart(row.lastName, "last name");
-    const email = this.assertValidEmail(row.email);
+    const email = this.resolveOptionalEmail(row.email);
     const dni = this.assertValidDni(row.dni);
     const birthDate = this.assertValidBirthDate(row.birthDate);
     const memberId = this.resolveMemberId(row.memberId);
     const phone = normalizePhone(row.phone);
     this.assertValidStatus(row.status);
 
-    const orClauses: Prisma.MemberWhereInput[] = [{ email }, { dni }];
+    const orClauses: Prisma.MemberWhereInput[] = [{ dni }];
+    if (email) {
+      orClauses.push({ email });
+    }
     if (memberId) {
       orClauses.push({ memberId });
     }
@@ -507,7 +546,7 @@ export class MemberService {
 
     if (activeMatches.length > 0) {
       const reasons: string[] = [];
-      if (activeMatches.some((m) => m.email === email)) {
+      if (email && activeMatches.some((m) => m.email === email)) {
         reasons.push("Email ya existe");
       }
       if (activeMatches.some((m) => m.dni === dni)) {

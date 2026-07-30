@@ -23,7 +23,7 @@ Autenticación de acceso al backoffice.
 | lastName | Obligatorio; editable |
 | fullName | Derivado en API (`firstName` + `lastName`); no se persiste |
 | memberId | Opcional; único si existe; id externo del socio en otra DB (columna SQL `member_id`) |
-| email | Obligatorio; único; **no editable** tras el alta |
+| email | Opcional; único si existe; editable |
 | dni | Obligatorio; único; 7–8 dígitos (ARG); editable |
 | birthDate | Obligatorio; fecha calendario; editable |
 | age / ageCategory | Derivados en API/UI (no columnas de negocio persistidas para categoría) |

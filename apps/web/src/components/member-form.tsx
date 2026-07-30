@@ -4,8 +4,8 @@ import type { CreateMemberRequest, MemberCondition, MemberStatus } from "@socios
 import {
   isValidMemberBirthDate,
   isValidMemberDni,
-  isValidMemberEmail,
   isValidMemberNamePart,
+  isValidOptionalMemberEmail,
   isValidOptionalMemberId,
   isValidOptionalMemberPhone,
   MEMBER_CONDITION_LABELS,
@@ -20,8 +20,8 @@ import {
   MEMBER_STATUS_LABELS,
   normalizeMemberBirthDate,
   normalizeMemberDni,
-  normalizeMemberEmail,
   normalizeMemberNamePart,
+  normalizeOptionalMemberEmail,
   normalizeOptionalMemberId,
   normalizeOptionalPhone,
 } from "@socios/shared";
@@ -29,24 +29,18 @@ import { type FormEvent, useState } from "react";
 
 interface MemberFormProps {
   initial?: Partial<CreateMemberRequest> & {
-    email?: string;
+    email?: string | null;
     dni?: string;
     birthDate?: string;
     firstName?: string;
     lastName?: string;
     memberId?: string | null;
   };
-  emailReadOnly?: boolean;
   submitLabel: string;
   onSubmit: (values: CreateMemberRequest) => Promise<void>;
 }
 
-export function MemberForm({
-  initial,
-  emailReadOnly = false,
-  submitLabel,
-  onSubmit,
-}: MemberFormProps) {
+export function MemberForm({ initial, submitLabel, onSubmit }: MemberFormProps) {
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [lastName, setLastName] = useState(initial?.lastName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
@@ -84,9 +78,9 @@ export function MemberForm({
       return;
     }
 
-    const normalizedEmail = normalizeMemberEmail(email);
-    if (!isValidMemberEmail(normalizedEmail)) {
-      setError("Ingresá un email válido");
+    const normalizedEmail = normalizeOptionalMemberEmail(email);
+    if (!isValidOptionalMemberEmail(normalizedEmail)) {
+      setError("Ingresá un email válido o dejalo vacío");
       setSubmitting(false);
       return;
     }
@@ -170,16 +164,14 @@ export function MemberForm({
       </div>
       <div className="row">
         <div className="field">
-          <label htmlFor="email">{emailReadOnly ? "Email (no editable)" : "Email"}</label>
+          <label htmlFor="email">Email (opcional)</label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
-            readOnly={emailReadOnly}
-            disabled={emailReadOnly}
             autoComplete="email"
+            placeholder="Puede quedar vacío"
           />
         </div>
         <div className="field">

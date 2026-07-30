@@ -15,7 +15,7 @@ export interface ParsedMemberImportRow {
   memberId: string | null;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   dni: string;
   birthDate: string;
   phone: string | null;
@@ -89,7 +89,7 @@ export async function buildMembersWorkbook(
       member.memberId ?? "",
       member.firstName,
       member.lastName,
-      member.email,
+      member.email ?? "",
       member.dni,
       member.birthDate,
       member.phone ?? "",
@@ -172,7 +172,7 @@ export async function parseMembersImportWorkbook(
       memberId: raw[MEMBER_EXCEL_HEADERS.memberId] || null,
       firstName: raw[MEMBER_EXCEL_HEADERS.firstName],
       lastName: raw[MEMBER_EXCEL_HEADERS.lastName],
-      email: raw[MEMBER_EXCEL_HEADERS.email],
+      email: raw[MEMBER_EXCEL_HEADERS.email] || null,
       dni: raw[MEMBER_EXCEL_HEADERS.dni],
       birthDate: raw[MEMBER_EXCEL_HEADERS.birthDate],
       phone: raw[MEMBER_EXCEL_HEADERS.phone] || null,

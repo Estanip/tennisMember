@@ -46,7 +46,8 @@ export interface Member {
   lastName: string;
   /** Derived: "{firstName} {lastName}" */
   fullName: string;
-  email: string;
+  /** Optional; unique when set */
+  email: string | null;
   dni: string;
   /** ISO calendar date YYYY-MM-DD */
   birthDate: string;
@@ -66,7 +67,8 @@ export interface Member {
 export interface CreateMemberRequest {
   firstName: string;
   lastName: string;
-  email: string;
+  /** Optional; unique when set */
+  email?: string | null;
   dni: string;
   /** ISO YYYY-MM-DD or dd/mm/yyyy */
   birthDate: string;
@@ -80,6 +82,8 @@ export interface CreateMemberRequest {
 export interface UpdateMemberRequest {
   firstName?: string;
   lastName?: string;
+  /** Optional; unique when set; editable after create */
+  email?: string | null;
   dni?: string;
   /** ISO YYYY-MM-DD or dd/mm/yyyy */
   birthDate?: string;

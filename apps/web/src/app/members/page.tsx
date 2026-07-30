@@ -338,7 +338,7 @@ export default function MembersPage() {
                           <td>{member.firstName}</td>
                           <td>{member.memberId ?? "—"}</td>
                           <td>{member.dni}</td>
-                          <td>{member.email}</td>
+                          <td>{member.email ?? "—"}</td>
                           <td>{member.age}</td>
                           <td>{MEMBER_AGE_CATEGORY_LABELS[member.ageCategory]}</td>
                           <td>{member.phone ?? "—"}</td>

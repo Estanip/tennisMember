@@ -35,7 +35,7 @@ export function buildNewMemberAlertContent(
     `Origen: ${sourceLabel}`,
     `Nombre: ${member.firstName}`,
     `Apellido: ${member.lastName}`,
-    `Email: ${member.email}`,
+    `Email: ${member.email ?? "—"}`,
     `DNI: ${member.dni}`,
     `Fecha de nacimiento: ${member.birthDate}`,
     `Edad: ${member.age}`,
@@ -53,7 +53,7 @@ export function buildNewMemberAlertContent(
         <li><strong>Origen:</strong> ${escapeHtml(sourceLabel)}</li>
         <li><strong>Nombre:</strong> ${escapeHtml(member.firstName)}</li>
         <li><strong>Apellido:</strong> ${escapeHtml(member.lastName)}</li>
-        <li><strong>Email:</strong> ${escapeHtml(member.email)}</li>
+        <li><strong>Email:</strong> ${escapeHtml(member.email ?? "—")}</li>
         <li><strong>DNI:</strong> ${escapeHtml(member.dni)}</li>
         <li><strong>Fecha de nacimiento:</strong> ${escapeHtml(member.birthDate)}</li>
         <li><strong>Edad:</strong> ${member.age}</li>

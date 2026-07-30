@@ -38,7 +38,7 @@ const memberSchema = {
     firstName: { type: "string" },
     lastName: { type: "string" },
     fullName: { type: "string" },
-    email: { type: "string" },
+    email: { type: ["string", "null"] },
     dni: { type: "string" },
     birthDate: { type: "string" },
     age: { type: "integer" },
@@ -75,12 +75,18 @@ const errorResponseSchema = {
 
 const createBodySchema = {
   type: "object",
-  required: ["firstName", "lastName", "email", "dni", "birthDate", "condition", "status"],
+  required: ["firstName", "lastName", "dni", "birthDate", "condition", "status"],
   additionalProperties: false,
   properties: {
     firstName: { type: "string", minLength: 2, maxLength: 60 },
     lastName: { type: "string", minLength: 2, maxLength: 60 },
-    email: { type: "string", format: "email", maxLength: 254 },
+    email: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", format: "email", maxLength: 254 },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
     birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
@@ -111,6 +117,13 @@ const updateBodySchema = {
   properties: {
     firstName: { type: "string", minLength: 2, maxLength: 60 },
     lastName: { type: "string", minLength: 2, maxLength: 60 },
+    email: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", format: "email", maxLength: 254 },
+        { type: "string", maxLength: 0 },
+      ],
+    },
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
     birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
@@ -440,7 +453,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
       preHandler: [app.requireMemberWrite],
       schema: {
         tags: ["Members"],
-        summary: "Update member (ADMIN) — email is immutable",
+        summary: "Update member (ADMIN)",
         security: [{ bearerAuth: [] }],
         params: {
           type: "object",

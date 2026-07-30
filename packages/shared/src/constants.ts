@@ -226,9 +226,26 @@ export function normalizeMemberEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+export function normalizeOptionalMemberEmail(email: string | null | undefined): string | null {
+  if (email === undefined || email === null) {
+    return null;
+  }
+  const normalized = normalizeMemberEmail(email);
+  return normalized.length > 0 ? normalized : null;
+}
+
 export function isValidMemberEmail(email: string): boolean {
   const normalized = normalizeMemberEmail(email);
   return normalized.length > 0 && MEMBER_EMAIL_PATTERN.test(normalized);
+}
+
+/** Empty / null is valid; non-empty must be a valid email. */
+export function isValidOptionalMemberEmail(email: string | null | undefined): boolean {
+  const normalized = normalizeOptionalMemberEmail(email);
+  if (normalized === null) {
+    return true;
+  }
+  return MEMBER_EMAIL_PATTERN.test(normalized);
 }
 
 /** ISO calendar date YYYY-MM-DD */

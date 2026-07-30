@@ -44,7 +44,8 @@ model Member {
   memberId  String?         @unique @map("member_id")
   firstName String
   lastName  String
-  email     String          @unique
+  /// Optional; unique when set
+  email     String?         @unique
   /// Argentine DNI: 7–8 digits, unique
   dni       String          @unique
   /// Calendar birth date; age is computed in the API from this field
