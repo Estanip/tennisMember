@@ -484,7 +484,10 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const data = await memberService.update(id, request.body as never);
+      const data = await memberService.update(id, request.body as never, {
+        role: request.user.role,
+        userId: request.user.sub,
+      });
       return reply.send({ success: true, data, message: "Member updated" });
     },
   );

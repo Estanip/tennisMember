@@ -31,7 +31,7 @@ Cada socio pertenece al club y tiene las siguientes propiedades:
 | ------------------ | --------------------------------- | -------------------------------------------------------------- |
 | Nombre             | Nombre de pila                    | Obligatorio; 2–60 caracteres; editable                                          |
 | Apellido           | Apellido                          | Obligatorio; 2–60 caracteres; editable                                          |
-| Email              | Contacto del socio (opcional)     | Opcional; formato válido si se carga; único si existe; editable                   |
+| Email              | Contacto del socio (opcional)     | Opcional; formato válido si se carga; único si existe; si ya hay valor, solo SUPER_ADMIN puede editarlo/vaciarlo |
 | DNI                | Documento nacional de identidad   | Obligatorio; 7–8 dígitos; único; editable                                          |
 | Fecha de nacimiento | Fecha de nacimiento del socio    | Obligatoria; se guarda en DB; la edad se calcula al consultar                      |
 | Edad               | Edad del socio (derivada)         | No se persiste; se infiere desde fecha de nacimiento (0–100)                       |
@@ -83,7 +83,7 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 1. Autenticación (login) de usuarios existentes.
 2. Listado / consulta de socios con búsqueda, filtros (condición/estado) y paginación.
 3. Alta (crear) de socios — solo ADMIN.
-4. Edición de socios (incluyendo email) — solo ADMIN.
+4. Edición de socios — solo ADMIN (email ya seteado: solo SUPER_ADMIN puede cambiarlo/vaciarlo).
 5. Soft delete de socios — solo ADMIN.
 6. Alta automática desde Google Form en estado Habilitado (webhook).
 7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel).

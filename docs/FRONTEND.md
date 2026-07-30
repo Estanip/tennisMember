@@ -28,7 +28,7 @@ Plantilla: `apps/web/.env.example`.
   - Login
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)
   - Exportar listado a Excel; importar desde plantilla `.xlsx` (admin) con modal de resultado
-  - Alta y edición de socios (email opcional y editable)
+  - Alta y edición de socios (email opcional; si ya existe, solo SUPER_ADMIN lo edita)
 
 ## Convenciones
 

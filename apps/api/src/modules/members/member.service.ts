@@ -8,8 +8,10 @@ import type {
   MemberListQuery,
   PaginatedMembers,
   UpdateMemberRequest,
+  UserRole,
 } from "@socios/shared";
 import {
+  canManageUsers,
   isEditableMemberStatus,
   isMemberDeleteReason,
   isMemberStatus,
@@ -275,7 +277,7 @@ export class MemberService {
     return dto;
   }
 
-  async update(id: string, input: UpdateMemberRequest) {
+  async update(id: string, input: UpdateMemberRequest, actor: { role: UserRole; userId: string }) {
     const member = await prisma.member.findFirst({
       where: { id, deletedAt: null },
     });
@@ -292,6 +294,23 @@ export class MemberService {
     let email: string | null | undefined;
     if (input.email !== undefined) {
       email = this.resolveOptionalEmail(input.email);
+      const currentEmail = member.email;
+      const emailChanging = email !== currentEmail;
+
+      if (emailChanging && currentEmail) {
+        if (!canManageUsers(actor.role)) {
+          log.warn(
+            { memberId: id, actorId: actor.userId, role: actor.role },
+            "Update rejected: existing email locked for non-super-admin",
+          );
+          throw new AppError(
+            "Only a super admin can change or clear an existing member email",
+            403,
+            "EMAIL_LOCKED",
+          );
+        }
+      }
+
       if (email) {
         const taken = await prisma.member.findFirst({
           where: { email, NOT: { id } },

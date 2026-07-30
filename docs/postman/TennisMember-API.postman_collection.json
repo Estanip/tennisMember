@@ -239,7 +239,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "members", "{{memberId}}"]
             },
-            "description": "Actualización parcial (solo ADMIN). El email es inmutable."
+            "description": "Actualización parcial (ADMIN). Si el socio ya tiene email, solo SUPER_ADMIN puede cambiarlo o vaciarlo (403 EMAIL_LOCKED)."
           },
           "response": []
         },

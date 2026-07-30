@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Google Form: alta de abonado en estado **Habilitado** (antes Pendiente)
 - Email de socio opcional (`null` permitido; único si existe) y editable tras el alta
 - Google Form webhook: `condition` opcional (`SOCIO_REGULAR` | `ABONADO_TENIS`; default abonado) vía Apps Script
+- Email de socio ya seteado: solo `SUPER_ADMIN` puede modificarlo o vaciarlo (si está vacío, ADMIN puede cargarlo)
 
 ### Changed
 

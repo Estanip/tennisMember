@@ -36,11 +36,18 @@ interface MemberFormProps {
     lastName?: string;
     memberId?: string | null;
   };
+  /** When true, email field is read-only (existing email locked for non-super-admin). */
+  emailReadOnly?: boolean;
   submitLabel: string;
   onSubmit: (values: CreateMemberRequest) => Promise<void>;
 }
 
-export function MemberForm({ initial, submitLabel, onSubmit }: MemberFormProps) {
+export function MemberForm({
+  initial,
+  emailReadOnly = false,
+  submitLabel,
+  onSubmit,
+}: MemberFormProps) {
   const [firstName, setFirstName] = useState(initial?.firstName ?? "");
   const [lastName, setLastName] = useState(initial?.lastName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
@@ -164,15 +171,22 @@ export function MemberForm({ initial, submitLabel, onSubmit }: MemberFormProps) 
       </div>
       <div className="row">
         <div className="field">
-          <label htmlFor="email">Email (opcional)</label>
+          <label htmlFor="email">
+            {emailReadOnly ? "Email (solo super admin puede modificarlo)" : "Email (opcional)"}
+          </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            readOnly={emailReadOnly}
+            disabled={emailReadOnly}
             autoComplete="email"
-            placeholder="Puede quedar vacío"
+            placeholder={emailReadOnly ? undefined : "Puede quedar vacío"}
           />
+          {emailReadOnly ? (
+            <p className="muted">Para cambiar o vaciar este email hace falta un super admin.</p>
+          ) : null}
         </div>
         <div className="field">
           <label htmlFor="dni">DNI</label>

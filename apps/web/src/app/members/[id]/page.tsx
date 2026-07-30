@@ -9,7 +9,7 @@ import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api-client";
 
 export default function EditMemberPage() {
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [member, setMember] = useState<Member | null>(null);
@@ -54,12 +54,19 @@ export default function EditMemberPage() {
     router.push("/members");
   }
 
+  const emailLocked = Boolean(member?.email) && !isSuperAdmin;
+
   return (
     <AppShell title="Editar socio">
       {error ? <p className="error">{error}</p> : null}
       {!member && !error ? <p className="muted">Cargando...</p> : null}
       {member ? (
-        <MemberForm submitLabel="Guardar cambios" initial={member} onSubmit={handleUpdate} />
+        <MemberForm
+          emailReadOnly={emailLocked}
+          submitLabel="Guardar cambios"
+          initial={member}
+          onSubmit={handleUpdate}
+        />
       ) : null}
     </AppShell>
   );
