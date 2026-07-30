@@ -1,5 +1,5 @@
 import type { GoogleFormMemberPayload, Member } from "@socios/shared";
-import { MEMBER_CONDITIONS, MEMBER_STATUS } from "@socios/shared";
+import { isMemberCondition, MEMBER_CONDITIONS, MEMBER_STATUS } from "@socios/shared";
 import { AppError } from "../../lib/errors.js";
 import { getLogger } from "../../lib/logger.js";
 import { MemberService } from "../members/member.service.js";
@@ -28,8 +28,15 @@ export class GoogleFormWebhookService {
       throw new AppError("Phone is required for Google Form submissions", 400, "PHONE_REQUIRED");
     }
 
+    const condition = this.resolveCondition(payload.condition);
+
     log.info(
-      { email: payload.email, dni: payload.dni, firstName: payload.firstName },
+      {
+        email: payload.email,
+        dni: payload.dni,
+        firstName: payload.firstName,
+        condition,
+      },
       "Processing Google Form member submission",
     );
 
@@ -41,13 +48,32 @@ export class GoogleFormWebhookService {
         dni: payload.dni,
         birthDate: payload.birthDate,
         phone,
-        condition: MEMBER_CONDITIONS.ABONADO_TENIS,
+        condition,
         status: MEMBER_STATUS.ENABLED,
       },
       { source: "GOOGLE_FORM" },
     );
 
-    log.info({ memberId: member.id, email: member.email }, "Google Form member created as enabled");
+    log.info(
+      { memberId: member.id, email: member.email, condition: member.condition },
+      "Google Form member created as enabled",
+    );
     return member;
+  }
+
+  private resolveCondition(
+    value: GoogleFormMemberPayload["condition"],
+  ): (typeof MEMBER_CONDITIONS)[keyof typeof MEMBER_CONDITIONS] {
+    if (value === undefined || value === null || String(value).trim() === "") {
+      return MEMBER_CONDITIONS.ABONADO_TENIS;
+    }
+    if (!isMemberCondition(value)) {
+      throw new AppError(
+        "condition must be SOCIO_REGULAR or ABONADO_TENIS",
+        400,
+        "INVALID_CONDITION",
+      );
+    }
+    return value;
   }
 }

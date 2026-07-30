@@ -3,10 +3,17 @@
  * Paste into the Form (or linked Spreadsheet) Apps Script editor.
  *
  * Docs: docs/GOOGLE_FORM.md
+ *
+ * Same webhook URL + secret for both forms. Only change MEMBER_CONDITION:
+ *   - "ABONADO_TENIS"  → form de abono tenis
+ *   - "SOCIO_REGULAR"  → form de socio regular
  */
 
 const WEBHOOK_URL = "<WEBHOOK_URL>/api/webhooks/google-form";
 const WEBHOOK_SECRET = "<WEBHOOK_SECRET>";
+
+/** Set per form: "ABONADO_TENIS" | "SOCIO_REGULAR" */
+const MEMBER_CONDITION = "ABONADO_TENIS";
 
 /**
  * @param {GoogleAppsScript.Events.FormsOnFormSubmit} e
@@ -41,6 +48,7 @@ function onFormSubmit(e) {
         byTitle[normalizeTitle("NRO DE TELEFONO")] ||
         "",
     ).replace(/\D/g, ""),
+    condition: MEMBER_CONDITION,
   };
 
   if (

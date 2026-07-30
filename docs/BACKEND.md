@@ -61,7 +61,7 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `GET /api/members/:id` — autenticado
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo)
 - `GET|POST|PATCH /api/users` — solo `SUPER_ADMIN`
-- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea Abonado Tenis en estado Habilitado
+- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea socio Habilitado (`condition` opcional: `ABONADO_TENIS` default | `SOCIO_REGULAR`)
 
 Integración Google Form: `docs/GOOGLE_FORM.md`.
 

@@ -25,6 +25,10 @@ const webhookBodySchema = {
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
     birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: { type: "string", pattern: "^\\d{10}$" },
+    condition: {
+      type: "string",
+      enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
+    },
   },
 } as const;
 
@@ -84,7 +88,7 @@ export async function googleFormWebhookRoutes(app: FastifyInstance): Promise<voi
     {
       schema: {
         tags: ["Webhooks"],
-        summary: "Create pending Abonado Tenis member from Google Form",
+        summary: "Create member from Google Form (Abonado Tenis or Socio Regular)",
         headers: {
           type: "object",
           required: ["x-webhook-secret"],
@@ -121,7 +125,7 @@ export async function googleFormWebhookRoutes(app: FastifyInstance): Promise<voi
       return reply.status(201).send({
         success: true,
         data,
-        message: "Member created as pending Abonado Tenis",
+        message: "Member created from Google Form",
       });
     },
   );

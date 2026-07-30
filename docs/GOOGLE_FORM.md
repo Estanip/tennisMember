@@ -7,12 +7,12 @@ Alta automática de aspirantes desde el form
 
 Cada envío crea un socio con:
 
-- `condition` = `ABONADO_TENIS`
+- `condition` = la enviada en el payload (`ABONADO_TENIS` o `SOCIO_REGULAR`). Si se omite → `ABONADO_TENIS` (compatibilidad con scripts viejos)
 - `status` = `1` (Habilitado)
 - Campos: email, nombre, apellido, DNI, fecha de nacimiento, teléfono
 - La edad y la categoría (Adulto/Menor) se calculan al consultar (Menor = edad &lt; 14)
 
-El socio queda habilitado al ingresar por el formulario.
+Podés reutilizar **el mismo webhook URL y el mismo `WEBHOOK_SECRET`** en dos formularios: solo cambiá `MEMBER_CONDITION` en el Apps Script de cada uno.
 
 ## Endpoint
 
@@ -31,9 +31,12 @@ Body:
   "lastName": "Perez",
   "dni": "30123456",
   "birthDate": "15/03/1995",
-  "phone": "2922440000"
+  "phone": "2922440000",
+  "condition": "ABONADO_TENIS"
 }
 ```
+
+`condition` es opcional: `ABONADO_TENIS` | `SOCIO_REGULAR` (default `ABONADO_TENIS`).
 
 `birthDate` acepta `dd/mm/aaaa` o `YYYY-MM-DD`.
 
@@ -69,12 +72,13 @@ curl -X POST "https://xxxx.ngrok-free.app/api/webhooks/google-form" \
 
 1. Abrí el form → menú **⋯** → **Script editor** (o desde la Sheet vinculada: Extensiones → Apps Script).
 2. Pegá el contenido de `integrations/google-form/Code.gs`.
-3. Completá `WEBHOOK_URL` (ngrok) y `WEBHOOK_SECRET`.
-4. Guardá → **Activadores** → agregar trigger:
+3. Completá `WEBHOOK_URL` (ngrok o API) y `WEBHOOK_SECRET`.
+4. Seteá `MEMBER_CONDITION` (`ABONADO_TENIS` o `SOCIO_REGULAR`) según el formulario.
+5. Guardá → **Activadores** → agregar trigger:
    - Función: `onFormSubmit`
    - Origen: desde el formulario
    - Tipo: Al enviar el formulario
-5. Autorizá permisos la primera vez.
+6. Autorizá permisos la primera vez.
 
 Si el script está en la **Spreadsheet** vinculada al form, el trigger también puede ser “Al enviar el formulario” sobre esa hoja.
 

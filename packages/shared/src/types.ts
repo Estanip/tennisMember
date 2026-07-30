@@ -115,6 +115,8 @@ export interface GoogleFormMemberPayload {
   /** Expected as dd/mm/yyyy from the form */
   birthDate: string;
   phone: string;
+  /** Defaults to ABONADO_TENIS when omitted (legacy Apps Script) */
+  condition?: MemberCondition;
 }
 
 export interface PaginatedMembers {

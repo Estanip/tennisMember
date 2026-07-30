@@ -84,6 +84,15 @@ export const MEMBER_CONDITION_LABELS: Record<MemberCondition, string> = {
   ABONADO_TENIS: "Abonado Tenis",
 };
 
+export const MEMBER_CONDITION_VALUES: MemberCondition[] = [
+  MEMBER_CONDITIONS.SOCIO_REGULAR,
+  MEMBER_CONDITIONS.ABONADO_TENIS,
+];
+
+export function isMemberCondition(value: string): value is MemberCondition {
+  return MEMBER_CONDITION_VALUES.includes(value as MemberCondition);
+}
+
 /** DB / API numeric status: 0 = No Habilitado, 1 = Habilitado, 2 = Pendiente, 3 = Eliminado */
 export const MEMBER_STATUS = {
   DISABLED: 0,
