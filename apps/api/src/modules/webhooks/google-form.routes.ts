@@ -1,5 +1,5 @@
 import type { GoogleFormMemberPayload } from "@socios/shared";
-import { MEMBER_CONDITIONS, MEMBER_STATUS } from "@socios/shared";
+import { MEMBER_CONDITIONS, MEMBER_EMAIL_PATTERN, MEMBER_STATUS } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
 import { GoogleFormWebhookService } from "./google-form.service.js";
 
@@ -19,7 +19,7 @@ const webhookBodySchema = {
   required: ["email", "firstName", "lastName", "dni", "birthDate", "phone"],
   additionalProperties: false,
   properties: {
-    email: { type: "string", format: "email", maxLength: 254 },
+    email: { type: "string", maxLength: 254, pattern: MEMBER_EMAIL_PATTERN.source },
     firstName: { type: "string", minLength: 2, maxLength: 60 },
     lastName: { type: "string", minLength: 2, maxLength: 60 },
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },

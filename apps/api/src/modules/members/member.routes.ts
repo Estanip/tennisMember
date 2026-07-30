@@ -3,12 +3,22 @@ import {
   MEMBER_CONDITIONS,
   MEMBER_DELETE_REASON_VALUES,
   MEMBER_EDITABLE_STATUS_VALUES,
+  MEMBER_EMAIL_PATTERN,
   MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_STATUS_VALUES,
 } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
 import { AppError } from "../../lib/errors.js";
 import { MemberService } from "./member.service.js";
+
+/** Aligned with `@socios/shared` — avoid AJV `format: email` (stricter / mismatched). */
+const optionalMemberEmailSchema = {
+  anyOf: [
+    { type: "null" },
+    { type: "string", maxLength: 0 },
+    { type: "string", maxLength: 254, pattern: MEMBER_EMAIL_PATTERN.source },
+  ],
+} as const;
 
 const memberSchema = {
   type: "object",
@@ -80,13 +90,7 @@ const createBodySchema = {
   properties: {
     firstName: { type: "string", minLength: 2, maxLength: 60 },
     lastName: { type: "string", minLength: 2, maxLength: 60 },
-    email: {
-      anyOf: [
-        { type: "null" },
-        { type: "string", format: "email", maxLength: 254 },
-        { type: "string", maxLength: 0 },
-      ],
-    },
+    email: optionalMemberEmailSchema,
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
     birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
@@ -117,13 +121,7 @@ const updateBodySchema = {
   properties: {
     firstName: { type: "string", minLength: 2, maxLength: 60 },
     lastName: { type: "string", minLength: 2, maxLength: 60 },
-    email: {
-      anyOf: [
-        { type: "null" },
-        { type: "string", format: "email", maxLength: 254 },
-        { type: "string", maxLength: 0 },
-      ],
-    },
+    email: optionalMemberEmailSchema,
     dni: { type: "string", pattern: "^\\d{7,8}$", minLength: 7, maxLength: 8 },
     birthDate: { type: "string", minLength: 8, maxLength: 10 },
     phone: {
