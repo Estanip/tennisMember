@@ -86,7 +86,7 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 4. Edición de socios — solo ADMIN (email ya seteado: solo SUPER_ADMIN puede cambiarlo/vaciarlo).
 5. Soft delete de socios — solo ADMIN.
 6. Alta automática desde Google Form en estado Habilitado (webhook).
-7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel).
+7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel); asunto/cuerpo según condición (Nuevo Socio / Nuevo Abonado Tenis).
 8. Exportar / importar socios en Excel (plantilla fija).
 
 ## Fuera de alcance (por ahora)

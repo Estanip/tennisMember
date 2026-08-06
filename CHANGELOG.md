@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Email de socio ya seteado: solo `SUPER_ADMIN` puede modificarlo o vaciarlo (si está vacío, ADMIN puede cargarlo)
 - Favicon / apple-icon del club (logo CALNA) en el backoffice web
 - Validación de email de socios alineada con `@socios/shared` (deja de usar AJV `format: email`)
+- Asunto y cuerpo de alerta de alta según condición: «Nuevo Socio» / «Nuevo Abonado Tenis»
 
 ### Changed
 

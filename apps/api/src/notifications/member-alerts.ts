@@ -1,5 +1,5 @@
 import type { Member } from "@socios/shared";
-import { MEMBER_CONDITION_LABELS, MEMBER_STATUS_LABELS } from "@socios/shared";
+import { MEMBER_CONDITION_LABELS, MEMBER_CONDITIONS, MEMBER_STATUS_LABELS } from "@socios/shared";
 import { getLogger } from "../lib/logger.js";
 import { getEmailProvider } from "./email/factory.js";
 
@@ -28,9 +28,15 @@ export function buildNewMemberAlertContent(
         ? "Importación Excel"
         : "Backoffice";
 
-  const subject = `[Socios] Nuevo socio: ${member.fullName}`;
+  const isAbonado = member.condition === MEMBER_CONDITIONS.ABONADO_TENIS;
+  const kindLabel = isAbonado ? "Abonado Tenis" : "Socio";
+  const subject = `[Socios] Nuevo ${kindLabel}: ${member.fullName}`;
+  const intro = isAbonado
+    ? "Se registró un nuevo abonado tenis en el padrón."
+    : "Se registró un nuevo socio en el padrón.";
+
   const text = [
-    "Se registró un nuevo socio en el padrón.",
+    intro,
     "",
     `Origen: ${sourceLabel}`,
     `Nombre: ${member.firstName}`,
@@ -48,7 +54,7 @@ export function buildNewMemberAlertContent(
 
   const html = `
     <div style="font-family:system-ui,sans-serif;line-height:1.5">
-      <p>Se registró un nuevo socio en el padrón.</p>
+      <p>${escapeHtml(intro)}</p>
       <ul>
         <li><strong>Origen:</strong> ${escapeHtml(sourceLabel)}</li>
         <li><strong>Nombre:</strong> ${escapeHtml(member.firstName)}</li>
