@@ -4,6 +4,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { AppError } from "../lib/errors.js";
 import { getLogger } from "../lib/logger.js";
+import { prisma } from "../lib/prisma.js";
 
 export interface JwtPayload {
   sub: string;
@@ -21,18 +22,39 @@ declare module "@fastify/jwt" {
 
 const log = getLogger("auth");
 
+async function hydrateUserFromDatabase(request: FastifyRequest): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: request.user.sub },
+    select: { id: true, email: true, name: true, role: true },
+  });
+
+  if (!user) {
+    log.warn({ userId: request.user.sub, path: request.url }, "Auth rejected: user not found");
+    throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
+  }
+
+  request.user = {
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as UserRole,
+  };
+}
+
 async function authPlugin(fastify: import("fastify").FastifyInstance): Promise<void> {
   fastify.decorate("authenticate", async (request: FastifyRequest, _reply: FastifyReply) => {
     try {
       await request.jwtVerify();
-      log.debug(
-        { userId: request.user.sub, role: request.user.role, path: request.url },
-        "Request authenticated",
-      );
     } catch {
       log.warn({ path: request.url, method: request.method }, "Authentication failed");
       throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
     }
+
+    await hydrateUserFromDatabase(request);
+    log.debug(
+      { userId: request.user.sub, role: request.user.role, path: request.url },
+      "Request authenticated",
+    );
   });
 
   fastify.decorate("requireMemberWrite", async (request: FastifyRequest, _reply: FastifyReply) => {

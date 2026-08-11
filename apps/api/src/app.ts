@@ -1,4 +1,5 @@
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
@@ -6,6 +7,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
 import { createRootLogger } from "./lib/logger.js";
+import { resolveJwtExpiresIn, resolveJwtSecret, shouldEnableSwagger } from "./lib/security.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { memberRoutes } from "./modules/members/member.routes.js";
 import { userRoutes } from "./modules/users/user.routes.js";
@@ -19,8 +21,14 @@ export async function buildApp() {
     loggerInstance: logger,
   });
 
+  await app.register(helmet, {
+    // API JSON; CSP is more relevant for HTML apps (Next). Keep defaults otherwise.
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  });
+
   await app.register(cors, {
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN ?? "http://localhost:3004",
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Webhook-Secret"],
@@ -39,31 +47,36 @@ export async function buildApp() {
   });
 
   await app.register(jwt, {
-    secret: process.env.JWT_SECRET ?? "local-dev-jwt-secret-change-me",
-  });
-
-  await app.register(swagger, {
-    openapi: {
-      info: {
-        title: "Socios Backoffice API",
-        description: "API for tennis club member management",
-        version: "0.1.0",
-      },
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
-          },
-        },
-      },
+    secret: resolveJwtSecret(),
+    sign: {
+      expiresIn: resolveJwtExpiresIn(),
     },
   });
 
-  await app.register(swaggerUi, {
-    routePrefix: "/docs",
-  });
+  if (shouldEnableSwagger()) {
+    await app.register(swagger, {
+      openapi: {
+        info: {
+          title: "Socios Backoffice API",
+          description: "API for tennis club member management",
+          version: "0.1.0",
+        },
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+              bearerFormat: "JWT",
+            },
+          },
+        },
+      },
+    });
+
+    await app.register(swaggerUi, {
+      routePrefix: "/docs",
+    });
+  }
 
   await app.register(errorHandlerPlugin);
   await app.register(authPlugin);

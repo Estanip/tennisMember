@@ -436,6 +436,14 @@
   resolved "https://registry.yarnpkg.com/@fastify/forwarded/-/forwarded-3.0.1.tgz#9662b7bd4a59f6d123cc3487494f75f635c32d23"
   integrity sha512-JqDochHFqXs3C3Ml3gOY58zM7OqO9ENqPo0UqAjAjH8L01fRZqwX9iLeX34//kiJubF7r2ZQHtBRU36vONbLlw==
 
+"@fastify/helmet@^13.0.1":
+  version "13.1.0"
+  resolved "https://registry.yarnpkg.com/@fastify/helmet/-/helmet-13.1.0.tgz#9af402a235812912e5a62969f7bc3e2379dc96c3"
+  integrity sha512-SvVOU0IrzYJW1BvSkfq9G1WUdW3dnaRUvg6m0BtgGMBmML62No0VmSu087jecH58SFbicbREgZTPJ89mAguupA==
+  dependencies:
+    fastify-plugin "^6.0.0"
+    helmet "^8.0.0"
+
 "@fastify/jwt@^9.1.0":
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/@fastify/jwt/-/jwt-9.1.0.tgz#9a765586ffdc4581f7071d00a94736a178d788c9"
@@ -1664,6 +1672,11 @@ graceful-fs@^4.1.2, graceful-fs@^4.2.0, graceful-fs@^4.2.2:
   version "4.2.11"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.11.tgz#4183e4e8bf08bb6e05bbb2f7d2e0c8f712ca40e3"
   integrity sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==
+
+helmet@^8.0.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/helmet/-/helmet-8.3.0.tgz#3842eea921e7c7015d11f217910c710c434efb26"
+  integrity sha512-Qgpiaws3Sm30Av8Eah6sjMCZZwjlBu+E68rhpCWBshY1lb09HtLwj5GviX0OyQIn+ulUS0iX0AxN5n3tLZzz1w==
 
 http-errors@^2.0.0:
   version "2.0.1"

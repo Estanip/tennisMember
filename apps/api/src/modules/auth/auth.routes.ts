@@ -1,5 +1,6 @@
 import { USER_ROLE_VALUES } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
+import { LOGIN_RATE_LIMIT_MAX, LOGIN_RATE_LIMIT_WINDOW } from "../../lib/security.js";
 import { AuthService } from "./auth.service.js";
 
 const loginBodySchema = {
@@ -58,6 +59,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     "/auth/login",
     {
+      config: {
+        rateLimit: {
+          max: LOGIN_RATE_LIMIT_MAX,
+          timeWindow: LOGIN_RATE_LIMIT_WINDOW,
+        },
+      },
       schema: {
         tags: ["Auth"],
         summary: "Login with email or username and password",
@@ -65,6 +72,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         response: {
           200: loginResponseSchema,
           401: errorResponseSchema,
+          429: errorResponseSchema,
         },
       },
     },

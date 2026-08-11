@@ -403,6 +403,9 @@ export const MEMBER_EXCEL_HEADERS = {
   status: "Estado",
 } as const;
 
+/** Max non-empty data rows accepted in a single Excel import (excluding header). */
+export const MEMBER_IMPORT_MAX_ROWS = 2000;
+
 export const MEMBER_EXCEL_HEADER_ORDER = [
   MEMBER_EXCEL_HEADERS.memberId,
   MEMBER_EXCEL_HEADERS.firstName,

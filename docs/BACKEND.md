@@ -9,13 +9,17 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 ## Swagger
 
-- Obligatorio con `@fastify/swagger` y `@fastify/swagger-ui`.
+- Obligatorio con `@fastify/swagger` y `@fastify/swagger-ui` en desarrollo.
+- En `NODE_ENV=production` **no** se monta `/docs` (salvo `ENABLE_SWAGGER=true`).
 - **CRÍTICO (Fastify 5.x)**: declarar **todas** las propiedades explícitamente en schemas para evitar filtrado de datos en responses.
 - Campos opcionales/nullable: `type: ["object", "null"]` (o el par de tipos que corresponda).
 
 ## Autenticación y autorización
 
 - JWT con `@fastify/jwt` y hash de passwords con `bcryptjs`.
+- Tokens con expiración (`JWT_EXPIRES_IN`, default **12h**).
+- En producción: `JWT_SECRET` obligatorio, ≥ 32 caracteres y sin placeholders (`change-me` / `local-dev`); la API no arranca si es inválido.
+- En cada request autenticado se **revalida el usuario en DB** (existencia + rol/email/nombre actuales); un JWT con rol viejo o usuario borrado queda inválido.
 - Middleware:
   - `authenticate` — usuario autenticado
   - `requireMemberWrite` — rol `ADMIN` o `SUPER_ADMIN` (escritura de socios)
@@ -25,7 +29,13 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 ## Rate limiting
 
-- `@fastify/rate-limit`: máx. **100** requests / **15** minutos.
+- Global (`@fastify/rate-limit`): máx. **100** requests / **15** minutos.
+- `POST /api/auth/login`: máx. **10** intentos / **15** minutos por IP.
+- `@fastify/helmet`: headers de seguridad HTTP en la API (CSP desactivado; la UI es Next).
+
+## Webhook Google Form
+
+- Header `X-Webhook-Secret` comparado con `GOOGLE_FORM_WEBHOOK_SECRET` de forma **timing-safe**.
 
 ## Logging
 
@@ -57,7 +67,7 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `GET /api/members` (search, filtros, paginación) — autenticado
 - `GET /api/members/export` — Excel `.xlsx` con filtros del listado
 - `GET /api/members/import-template` — plantilla Excel (ADMIN)
-- `POST /api/members/import` — multipart `.xlsx` (ADMIN); alta parcial + resumen de omitidos/reactivados
+- `POST /api/members/import` — multipart `.xlsx` (ADMIN); máx. **2000** filas; magic bytes + MIME; alta parcial + resumen de omitidos/reactivados
 - `GET /api/members/:id` — autenticado
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo). En PATCH, si el socio ya tiene email, solo `SUPER_ADMIN` puede cambiarlo o vaciarlo (`403 EMAIL_LOCKED`)
 - `GET|POST|PATCH /api/users` — solo `SUPER_ADMIN`

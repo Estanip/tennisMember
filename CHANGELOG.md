@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Favicon / apple-icon del club (logo CALNA) en el backoffice web
 - Validación de email de socios alineada con `@socios/shared` (deja de usar AJV `format: email`)
 - Asunto y cuerpo de alerta de alta según condición: «Nuevo Socio» / «Nuevo Abonado Tenis»
+- Hardening API: JWT con expiración (default 12h), `JWT_SECRET` obligatorio en prod, rate limit de login (10/15min), webhook timing-safe, Swagger off en prod
+- Hardening API (2): revalidación de usuario/rol en DB por request, `@fastify/helmet`, import Excel con tope 2000 filas + magic bytes/MIME
 
 ### Changed
 

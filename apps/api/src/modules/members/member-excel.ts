@@ -3,6 +3,7 @@ import {
   MEMBER_CONDITION_LABELS,
   MEMBER_EXCEL_HEADER_ORDER,
   MEMBER_EXCEL_HEADERS,
+  MEMBER_IMPORT_MAX_ROWS,
   MEMBER_STATUS_LABELS,
   parseMemberExcelCondition,
   parseMemberExcelStatus,
@@ -60,6 +61,33 @@ function assertTemplateHeaders(sheet: ExcelJS.Worksheet): void {
   }
 }
 
+/** .xlsx is a ZIP package; reject obvious non-ZIP payloads before ExcelJS parse. */
+export function assertXlsxMagicBytes(buffer: Buffer): void {
+  if (
+    buffer.length < 4 ||
+    buffer[0] !== 0x50 ||
+    buffer[1] !== 0x4b ||
+    (buffer[2] !== 0x03 && buffer[2] !== 0x05 && buffer[2] !== 0x07)
+  ) {
+    throw new AppError("El archivo no parece un Excel .xlsx válido", 400, "INVALID_FILE_TYPE");
+  }
+}
+
+const ALLOWED_XLSX_MIME_TYPES = new Set([
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/octet-stream",
+  "application/zip",
+]);
+
+export function assertXlsxUploadMeta(filename: string, mimetype: string | undefined): void {
+  if (!filename.toLowerCase().endsWith(".xlsx")) {
+    throw new AppError("El archivo debe ser .xlsx", 400, "INVALID_FILE_TYPE");
+  }
+  if (mimetype && !ALLOWED_XLSX_MIME_TYPES.has(mimetype.toLowerCase())) {
+    throw new AppError(`Tipo de archivo no permitido (${mimetype})`, 400, "INVALID_FILE_TYPE");
+  }
+}
+
 export async function buildMembersWorkbook(
   members: Member[],
   options: { includeExampleRow?: boolean } = {},
@@ -112,6 +140,8 @@ export async function parseMembersImportWorkbook(
 ): Promise<
   Array<ParsedMemberImportRow | { row: number; error: string; raw: Record<string, string> }>
 > {
+  assertXlsxMagicBytes(buffer);
+
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
   const sheet = workbook.worksheets[0];
@@ -124,6 +154,7 @@ export async function parseMembersImportWorkbook(
   const rows: Array<
     ParsedMemberImportRow | { row: number; error: string; raw: Record<string, string> }
   > = [];
+  let dataRowCount = 0;
 
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) {
@@ -145,6 +176,15 @@ export async function parseMembersImportWorkbook(
     const isEmpty = Object.values(raw).every((v) => !v);
     if (isEmpty) {
       return;
+    }
+
+    dataRowCount += 1;
+    if (dataRowCount > MEMBER_IMPORT_MAX_ROWS) {
+      throw new AppError(
+        `El import supera el máximo de ${MEMBER_IMPORT_MAX_ROWS} filas de datos`,
+        400,
+        "IMPORT_TOO_LARGE",
+      );
     }
 
     const condition = parseMemberExcelCondition(raw[MEMBER_EXCEL_HEADERS.condition]);

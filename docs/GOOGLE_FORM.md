@@ -22,6 +22,8 @@ Content-Type: application/json
 X-Webhook-Secret: <GOOGLE_FORM_WEBHOOK_SECRET>
 ```
 
+El secret se compara de forma **timing-safe** con `GOOGLE_FORM_WEBHOOK_SECRET`.
+
 Body:
 
 ```json

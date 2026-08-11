@@ -10,6 +10,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import { AppError } from "../../lib/errors.js";
 import { MemberService } from "./member.service.js";
+import { assertXlsxUploadMeta } from "./member-excel.js";
 
 /** Aligned with `@socios/shared` — avoid AJV `format: email` (stricter / mismatched). */
 const optionalMemberEmailSchema = {
@@ -364,10 +365,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
       if (!file) {
         throw new AppError("Se requiere un archivo Excel (.xlsx)", 400, "FILE_REQUIRED");
       }
-      const filename = file.filename.toLowerCase();
-      if (!filename.endsWith(".xlsx")) {
-        throw new AppError("El archivo debe ser .xlsx", 400, "INVALID_FILE_TYPE");
-      }
+      assertXlsxUploadMeta(file.filename, file.mimetype);
       const buffer = await file.toBuffer();
       const data = await memberService.importFromExcel(buffer);
       return reply.send({ success: true, data });
