@@ -56,7 +56,7 @@ Collection y environments: [`docs/postman/`](./docs/postman/).
 
 | Documento | Uso |
 | --- | --- |
-| [`.cursorrules`](./.cursorrules) | Reglas genéricas del agente |
+| [`.cursor/rules/`](./.cursor/rules/) | Reglas genéricas del agente (`.mdc`) |
 | [`docs/PRODUCT_CONTEXT.md`](./docs/PRODUCT_CONTEXT.md) | Producto y reglas de negocio |
 | [`docs/STACK.md`](./docs/STACK.md) | Tech stack |
 | [`docs/ARQUITECTURA.md`](./docs/ARQUITECTURA.md) | Arquitectura |

@@ -1,0 +1,23 @@
+---
+description: Mapa de documentación del producto a consultar según la tarea
+alwaysApply: true
+---
+
+# Contexto específico del proyecto
+
+Leer según la tarea (detalle técnico y de producto solo aquí, no en otras rules):
+
+| Área | Documento |
+| --- | --- |
+| Producto / negocio | `docs/PRODUCT_CONTEXT.md` |
+| Tech stack | `docs/STACK.md` |
+| Arquitectura | `docs/ARQUITECTURA.md` |
+| Backend | `docs/BACKEND.md` |
+| Frontend | `docs/FRONTEND.md` |
+| Modelos de datos | `docs/MODELOS.md` |
+| Base de datos | `docs/DATABASE.md` |
+| Deployment / entornos | `docs/DEPLOYMENT.md` |
+| Glosario | `docs/CONCEPTOS.md` |
+| Google Form | `docs/GOOGLE_FORM.md` |
+| Setup | `README.md` |
+| Historial | `CHANGELOG.md` |

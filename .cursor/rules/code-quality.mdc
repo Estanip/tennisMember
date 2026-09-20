@@ -1,0 +1,13 @@
+---
+description: Estándares transversales de calidad de código
+alwaysApply: true
+---
+
+# Calidad de código
+
+- Tipado estricto; prohibido `any` implícito o explícito salvo justificación excepcional aprobada.
+- Clean Code y principios SOLID.
+- Sin comentarios obvios; solo explicar lógica compleja o no evidente.
+- Preferir funciones puras y reutilizables cuando aporte claridad.
+- Respetar el tooling y las convenciones de calidad **ya definidos en la documentación del proyecto** (no sustituirlos por preferencias del agente).
+- Diff mínimo: no refactors ni archivos colaterales fuera del alcance pedido.

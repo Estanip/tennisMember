@@ -19,7 +19,7 @@ packages/
 - **Separación de responsabilidades**: rutas → servicios → Prisma; UI → context/api client → API.
 - **Contrato compartido**: tipos y constantes de dominio en `@socios/shared` (evitar duplicar enums/labels).
 - **Single club**: no hay multi-tenant ni multi-club.
-- **SOLID / Clean Code** en todas las capas (ver `.cursorrules`).
+- **SOLID / Clean Code** en todas las capas (ver `.cursor/rules/`).
 
 ## Límites
 

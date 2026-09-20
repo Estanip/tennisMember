@@ -1,0 +1,11 @@
+---
+description: Protección de secretos y datos sensibles
+alwaysApply: true
+---
+
+# Seguridad de secretos
+
+- No commitear ni versionar archivos con secretos (`.env`, claves, credenciales, tokens).
+- No pegar en el chat valores reales de secretos; si hace falta referenciarlos, usar nombres de variable o placeholders.
+- No inventar secretos “de ejemplo” en archivos que se versionan; documentar solo el nombre de la variable y, si aplica, que el valor vive fuera del repo.
+- Si un cambio toca auth, permisos o datos personales: revisar el impacto antes de cerrar y no debilitar controles existentes sin pedido explícito.

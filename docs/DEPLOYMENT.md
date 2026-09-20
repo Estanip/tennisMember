@@ -69,7 +69,7 @@ Antes de pushear a `main`/`master` (o de afirmar que CI/deploy van a pasar):
    - Revisar `railway.api.toml` / `railway.web.toml` (builder Railpack, `YARN_PRODUCTION=false`, `preDeployCommand` de migraciones en API)
    - Confirmar que un deploy fallido **no** aplica migraciones y deja la imagen anterior
 
-Commits: Conventional Commits; **sin** `Co-authored-by` de Cursor u otras IAs (ver `.cursorrules`).
+Commits: Conventional Commits; **sin** `Co-authored-by` de Cursor u otras IAs (ver `.cursor/rules/`).
 
 ## Railway (ambiente test)
 

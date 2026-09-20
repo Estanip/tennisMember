@@ -1,0 +1,17 @@
+---
+description: Protocolo obligatorio de trabajo del agente (análisis, plan, aprobación)
+alwaysApply: true
+---
+
+# Protocolo de trabajo (estricto)
+
+Estas rules son **genéricas y reutilizables**. No fijan stack ni herramientas: el detalle técnico vive en la documentación del proyecto.
+
+1. **Análisis**: Leer el contexto de producto y los docs relevantes al cambio antes de proponer o editar.
+2. **Planificación**: Presentar un PLAN DE ACCIÓN detallado.
+3. **Aprobación**: Esperar confirmación explícita (`PROCEDE`) antes de editar cualquier archivo. Un `PROCEDE` cubre solo el plan aprobado; si el alcance cambia, nuevo plan + nuevo `PROCEDE`.
+4. **Verificación**: Cerrar la tarea según la rule de cierre (calidad + prueba reproducible cuando aplique).
+
+No inventar convenciones de producto: si no está en docs o en el código, preguntar.
+
+**Operaciones destructivas**: no ejecutar (ni proponer como hecho) reset duro, borrado irreversible de datos, force push u otras acciones destructivas sin pedido **literal y explícito** del usuario.

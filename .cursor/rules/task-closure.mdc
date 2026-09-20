@@ -1,0 +1,27 @@
+---
+description: Cierre de tarea — validación, prueba reproducible, docs y commits
+alwaysApply: true
+---
+
+# Cierre de tarea
+
+Antes de decir “listo”, pedir commit o pushear:
+
+1. **Validación de calidad (obligatoria)**  
+   Ejecutar el mismo flujo de verificación local/CI que define el proyecto en su documentación.  
+   Si el cambio afecta deploy, migraciones o scripts de build/start/release: revisar la doc de deployment y confirmar coherencia.  
+   No afirmar que CI/deploy pasan sin haber corrido esa validación (o sin reportar qué faltó y por qué).
+
+2. **Prueba reproducible del cambio (cuando el cambio lo permita y justifique)**  
+   - Identificar el comportamiento nuevo o alterado.  
+   - Ejecutar una prueba mínima real contra ese comportamiento (p. ej. invocar el endpoint/flujo/comando y comprobar respuesta o efecto).  
+   - Reportar qué se probó y el resultado.  
+   - Si no es reproducible o falta entorno/servicio/credencial: declararlo explícitamente; no afirmar que funciona.
+
+3. **Documentar**:
+   - Actualizar `CHANGELOG.md` (Keep a Changelog) cuando el cambio sea relevante.
+   - Si cambia comportamiento, contrato o modelo: actualizar también el `docs/*` correspondiente (no solo el changelog).
+
+4. **Commit / push**: Conventional Commits (scope opcional). Solo crear commits si el usuario lo pide. **Push** solo con pedido explícito.
+
+5. **Sin co-autoría de IA**: nunca agregar trailers/metadata de co-autoría de Cursor, Copilot u otras IAs al mensaje de commit. Si el entorno los inyecta, reintentar dejando solo el mensaje Conventional Commit.
