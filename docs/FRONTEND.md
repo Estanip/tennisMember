@@ -25,6 +25,7 @@ Plantilla: `apps/web/.env.example`.
 - Estilo alineado visualmente con CourtBook admin (tokens stone + accent `#2B7FFF`, tipografía DM Sans / Source Serif 4).
 - CSS propio (sin Tailwind); clases semánticas en `globals.css`.
 - Temas **claro** / **oscuro** / **sistema** (`localStorage`); toggle en login y topbar.
+- Topbar responsive: menú hamburguesa en viewports ≤720px (drawer con nav, tema y salir).
 - Pantallas MVP:
   - Login
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)
