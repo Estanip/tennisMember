@@ -21,7 +21,7 @@ interface AuthContextValue {
   canWriteMembers: boolean;
   isSuperAdmin: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -32,18 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const token = apiClient.getToken();
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
+    apiClient.clearLegacyToken();
     try {
       const me = await apiClient.me();
       setUser(me);
     } catch {
-      apiClient.setToken(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -59,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }, []);
 
-  const logout = useCallback(() => {
-    apiClient.setToken(null);
+  const logout = useCallback(async () => {
+    await apiClient.logout();
     setUser(null);
   }, []);
 

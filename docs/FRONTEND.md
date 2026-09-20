@@ -5,7 +5,8 @@ Aplicación: `apps/web` (Next.js 16 App Router, React 19, TypeScript estricto).
 ## Estado y auth
 
 - React Context API (`AuthProvider` / `useAuth`) para sesión.
-- Token JWT en `localStorage` vía el API client.
+- Sesión vía cookie **httpOnly** (`socios_token`) con `credentials: "include"`; no se guarda JWT en `localStorage`.
+- `POST /auth/logout` limpia la cookie. Bearer JWT sigue válido para Postman/Swagger.
 - `ADMIN` y `SUPER_ADMIN`: crear, editar y eliminar socios en UI.
 - `SUPER_ADMIN`: además sección `/users` para gestionar usuarios y roles.
 - `USER`: solo listado/consulta; sin acciones de escritura ni rutas de alta/edición.

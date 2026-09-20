@@ -1,3 +1,4 @@
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import jwt from "@fastify/jwt";
@@ -7,7 +8,12 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
 import { createRootLogger } from "./lib/logger.js";
-import { resolveJwtExpiresIn, resolveJwtSecret, shouldEnableSwagger } from "./lib/security.js";
+import {
+  AUTH_COOKIE_NAME,
+  resolveJwtExpiresIn,
+  resolveJwtSecret,
+  shouldEnableSwagger,
+} from "./lib/security.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { memberRoutes } from "./modules/members/member.routes.js";
 import { userRoutes } from "./modules/users/user.routes.js";
@@ -22,9 +28,10 @@ export async function buildApp() {
   });
 
   await app.register(helmet, {
-    // API JSON; CSP is more relevant for HTML apps (Next). Keep defaults otherwise.
+    // API JSON consumed cross-origin by the Next app (Railway web≠api hosts).
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   });
 
   await app.register(cors, {
@@ -33,6 +40,8 @@ export async function buildApp() {
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Webhook-Secret"],
   });
+
+  await app.register(cookie);
 
   await app.register(multipart, {
     limits: {
@@ -50,6 +59,10 @@ export async function buildApp() {
     secret: resolveJwtSecret(),
     sign: {
       expiresIn: resolveJwtExpiresIn(),
+    },
+    cookie: {
+      cookieName: AUTH_COOKIE_NAME,
+      signed: false,
     },
   });
 

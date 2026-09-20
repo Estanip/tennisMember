@@ -38,6 +38,7 @@ Collection y environments para probar la API (`apps/api`).
 4. **Auth → Me** o **Members → List members**.
 5. **Members → Create member** → guarda `memberId` para get/update/delete.
 6. **Webhooks → Google Form** usa `webhookSecret` (sin JWT).
+7. El backoffice web usa cookie httpOnly; Postman sigue con Bearer tras Login.
 
 ## Endpoints incluidos
 

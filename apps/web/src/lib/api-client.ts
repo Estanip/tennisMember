@@ -17,7 +17,8 @@ import type {
   UserListQuery,
 } from "@socios/shared";
 
-const TOKEN_KEY = "socios_token";
+/** Legacy localStorage key — cleared once so old JWTs are not reused after cookie migration. */
+const LEGACY_TOKEN_KEY = "socios_token";
 
 class ApiClient {
   private readonly baseUrl: string;
@@ -26,32 +27,33 @@ class ApiClient {
     this.baseUrl = baseUrl.replace(/\/$/, "");
   }
 
-  getToken(): string | null {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    return window.localStorage.getItem(TOKEN_KEY);
-  }
-
-  setToken(token: string | null): void {
+  /** Drop any pre-cookie JWT left in localStorage (idempotent). */
+  clearLegacyToken(): void {
     if (typeof window === "undefined") {
       return;
     }
-    if (!token) {
-      window.localStorage.removeItem(TOKEN_KEY);
-      return;
-    }
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.removeItem(LEGACY_TOKEN_KEY);
   }
 
   async login(payload: LoginRequest): Promise<LoginResponse> {
-    const data = await this.request<LoginResponse>("/auth/login", {
+    this.clearLegacyToken();
+    return this.request<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
       auth: false,
     });
-    this.setToken(data.token);
-    return data;
+  }
+
+  async logout(): Promise<void> {
+    this.clearLegacyToken();
+    try {
+      await this.request<undefined>("/auth/logout", {
+        method: "POST",
+        auth: false,
+      });
+    } catch {
+      // Cookie clear is best-effort; local session is dropped either way.
+    }
   }
 
   async me(): Promise<AuthUser> {
@@ -86,16 +88,10 @@ class ApiClient {
     const formData = new FormData();
     formData.append("file", file);
 
-    const headers = new Headers();
-    const token = this.getToken();
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-
     const response = await fetch(`${this.baseUrl}/members/import`, {
       method: "POST",
-      headers,
       body: formData,
+      credentials: "include",
     });
 
     const json = (await response.json()) as ApiResponse<MemberImportResult>;
@@ -168,13 +164,9 @@ class ApiClient {
   }
 
   private async downloadFile(path: string, fallbackFilename: string): Promise<void> {
-    const headers = new Headers();
-    const token = this.getToken();
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-
-    const response = await fetch(`${this.baseUrl}${path}`, { headers });
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      credentials: "include",
+    });
     if (!response.ok) {
       let message = `Request failed with status ${response.status}`;
       try {
@@ -212,16 +204,10 @@ class ApiClient {
       headers.set("Content-Type", "application/json");
     }
 
-    if (options.auth !== false) {
-      const token = this.getToken();
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-    }
-
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     const json = (await response.json()) as ApiResponse<T>;

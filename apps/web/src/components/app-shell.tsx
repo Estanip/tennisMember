@@ -53,8 +53,9 @@ export function AppShell({
             type="button"
             className="btn btn-secondary"
             onClick={() => {
-              logout();
-              router.replace("/");
+              void logout().finally(() => {
+                router.replace("/");
+              });
             }}
           >
             Salir

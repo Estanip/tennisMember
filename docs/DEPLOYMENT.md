@@ -124,6 +124,7 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 | `DATABASE_URL` | Referencia al plugin Postgres (Variable Reference) |
 | `JWT_SECRET` | Secret fuerte (≥32 chars); placeholders `change-me` rechazados al boot |
 | `JWT_EXPIRES_IN` | Opcional; default `12h` |
+| `AUTH_COOKIE_SECURE` | Opcional; default `true` en prod (SameSite=None). Forzar `false` solo en HTTP local raro |
 | `ENABLE_SWAGGER` | Opcional; `true` para montar `/docs` en prod (off por default) |
 | `CORS_ORIGIN` | URL pública del service `web` (ej. `https://web-xxxx.up.railway.app`) |
 | `GOOGLE_FORM_WEBHOOK_SECRET` | Secret de test; actualizar Apps Script |

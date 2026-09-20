@@ -18,6 +18,8 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 - JWT con `@fastify/jwt` y hash de passwords con `bcryptjs`.
 - Tokens con expiración (`JWT_EXPIRES_IN`, default **12h**).
+- Sesión web: cookie httpOnly `socios_token` (SameSite=`None`+Secure en prod; `Lax` en local). Bearer sigue soportado (Postman).
+- `POST /api/auth/logout` limpia la cookie.
 - En producción: `JWT_SECRET` obligatorio, ≥ 32 caracteres y sin placeholders (`change-me` / `local-dev`); la API no arranca si es inválido.
 - En cada request autenticado se **revalida el usuario en DB** (existencia + rol/email/nombre actuales); un JWT con rol viejo o usuario borrado queda inválido.
 - Middleware:
@@ -62,7 +64,8 @@ Aplicación: `apps/api` (Fastify 5.x).
 
 ## Endpoints MVP (socios)
 
-- `POST /api/auth/login` — body `{ identifier, password }` (email o username)
+- `POST /api/auth/login` — body `{ identifier, password }` (email o username); setea cookie de sesión
+- `POST /api/auth/logout` — limpia cookie de sesión
 - `GET /api/auth/me`
 - `GET /api/members` (search, filtros, paginación) — autenticado
 - `GET /api/members/export` — Excel `.xlsx` con filtros del listado

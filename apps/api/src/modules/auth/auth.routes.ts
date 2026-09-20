@@ -1,6 +1,11 @@
 import { USER_ROLE_VALUES } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
-import { LOGIN_RATE_LIMIT_MAX, LOGIN_RATE_LIMIT_WINDOW } from "../../lib/security.js";
+import {
+  AUTH_COOKIE_NAME,
+  LOGIN_RATE_LIMIT_MAX,
+  LOGIN_RATE_LIMIT_WINDOW,
+  resolveAuthCookieOptions,
+} from "../../lib/security.js";
 import { AuthService } from "./auth.service.js";
 
 const loginBodySchema = {
@@ -79,7 +84,39 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const body = request.body as { identifier: string; password: string };
       const data = await authService.login(body);
+      reply.setCookie(AUTH_COOKIE_NAME, data.token, resolveAuthCookieOptions());
       return reply.send({ success: true, data });
+    },
+  );
+
+  app.post(
+    "/auth/logout",
+    {
+      schema: {
+        tags: ["Auth"],
+        summary: "Clear the session cookie",
+        response: {
+          200: {
+            type: "object",
+            required: ["success"],
+            additionalProperties: false,
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (_request, reply) => {
+      const options = resolveAuthCookieOptions();
+      reply.clearCookie(AUTH_COOKIE_NAME, {
+        path: options.path,
+        httpOnly: options.httpOnly,
+        secure: options.secure,
+        sameSite: options.sameSite,
+      });
+      return reply.send({ success: true, message: "Logged out" });
     },
   );
 

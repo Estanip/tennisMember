@@ -79,3 +79,52 @@ export function shouldEnableSwagger(): boolean {
   }
   return !isProductionRuntime();
 }
+
+/** HttpOnly session cookie carrying the JWT (web uses credentials; Postman can still use Bearer). */
+export const AUTH_COOKIE_NAME = "socios_token";
+
+/** Parse `JWT_EXPIRES_IN`-style values (`12h`, `30m`, `1d`, bare seconds) into Max-Age seconds. */
+export function resolveJwtExpiresInSeconds(): number {
+  const raw = resolveJwtExpiresIn().trim().toLowerCase();
+  const match = /^(\d+)([smhd])?$/.exec(raw);
+  if (!match) {
+    return 12 * 60 * 60;
+  }
+  const amount = Number(match[1]);
+  const unit = match[2] ?? "s";
+  const multipliers: Record<string, number> = {
+    s: 1,
+    m: 60,
+    h: 60 * 60,
+    d: 24 * 60 * 60,
+  };
+  return amount * (multipliers[unit] ?? 1);
+}
+
+/**
+ * Cookie flags for cross-origin web↔API (Railway subdomains need SameSite=None + Secure).
+ * Local HTTP uses Lax without Secure so the cookie is set on localhost.
+ */
+export function resolveAuthCookieOptions(): {
+  path: string;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: "lax" | "none" | "strict";
+  maxAge: number;
+} {
+  const forceSecure = process.env.AUTH_COOKIE_SECURE?.trim().toLowerCase();
+  const secure =
+    forceSecure === "true" || forceSecure === "1"
+      ? true
+      : forceSecure === "false" || forceSecure === "0"
+        ? false
+        : isProductionRuntime();
+
+  return {
+    path: "/",
+    httpOnly: true,
+    secure,
+    sameSite: secure ? "none" : "lax",
+    maxAge: resolveJwtExpiresInSeconds(),
+  };
+}
