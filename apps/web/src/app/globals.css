@@ -609,17 +609,19 @@ a.link-action {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 960px) {
   .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
     padding: 0.65rem 0.75rem;
+    overflow: hidden;
   }
 
   .brand {
     font-size: 1rem;
+    max-width: calc(100% - 3.25rem);
   }
 
   .brand-full {
@@ -656,35 +658,27 @@ a.link-action {
   }
 
   .mobile-menu {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 1rem;
     position: fixed;
     top: 0;
     right: 0;
     z-index: 40;
-    width: min(18rem, calc(100vw - 2.5rem));
-    max-width: 100%;
+    width: 18rem;
+    max-width: calc(100% - 2rem);
     height: 100dvh;
     padding: 1rem;
     background: var(--topbar-bg);
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow);
     box-sizing: border-box;
-    transform: translateX(105%);
-    transition:
-      transform 0.2s ease,
-      visibility 0.2s ease;
     overflow-x: hidden;
     overflow-y: auto;
-    visibility: hidden;
-    pointer-events: none;
   }
 
   .mobile-menu.is-open {
-    transform: translateX(0);
-    visibility: visible;
-    pointer-events: auto;
+    display: flex;
   }
 
   .mobile-menu-header {
@@ -755,6 +749,8 @@ a.link-action {
   .page-header-actions,
   .page-header-actions .actions {
     justify-content: stretch;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .page-header-actions .btn {

@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardening API (2): revalidación de usuario/rol en DB por request, `@fastify/helmet`, import Excel con tope 2000 filas + magic bytes/MIME
 - Sesión web con cookie httpOnly (`socios_token`) + `POST /auth/logout`; Bearer sigue para Postman
 - `@fastify/cookie` fijado en v10 (Node 20; `cookie@2` exige Node ≥22 y rompía Railway)
-- Web: menú hamburguesa en mobile (drawer) para evitar scroll horizontal del topbar
+- Web: menú hamburguesa en mobile/tablet ≤960px (drawer; sin `100vw` ni topbar desktop desbordado)
 
 ### Changed
 
