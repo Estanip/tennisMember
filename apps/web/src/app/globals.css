@@ -672,7 +672,9 @@ a.link-action {
     box-shadow: var(--shadow);
     box-sizing: border-box;
     transform: translateX(105%);
-    transition: transform 0.2s ease, visibility 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      visibility 0.2s ease;
     overflow-x: hidden;
     overflow-y: auto;
     visibility: hidden;
