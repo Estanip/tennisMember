@@ -75,7 +75,7 @@ export function AppShell({
     <div className="app-shell">
       <header className="topbar">
         <Link href="/members" className="brand">
-          <span className="brand-full">Socios Backoffice</span>
+          <span className="brand-full">Administrador de Socios</span>
           <span className="brand-short">Socios</span>
         </Link>
 

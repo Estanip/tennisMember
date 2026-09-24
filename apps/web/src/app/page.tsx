@@ -5,11 +5,15 @@ import { type FormEvent, useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/context/auth-context";
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE?.trim().toLowerCase() === "true";
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL?.trim() || "admin@socios.demo";
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD?.trim() || "DemoAdmin123!";
+
 export default function LoginPage() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("superadmin");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState(DEMO_MODE ? DEMO_EMAIL : "superadmin");
+  const [password, setPassword] = useState(DEMO_MODE ? DEMO_PASSWORD : "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,9 +44,14 @@ export default function LoginPage() {
       </div>
       <section className="card login-card stack">
         <div>
-          <p className="login-brand">Socios</p>
+          <p className="login-brand">{DEMO_MODE ? "Administrador de Socios" : "Socios"}</p>
           <p className="login-kicker">Backoffice</p>
           <p className="login-lead">Iniciá sesión para gestionar el padrón</p>
+          {DEMO_MODE ? (
+            <p className="muted" style={{ marginTop: "0.75rem", fontSize: "0.8rem" }}>
+              Demo: {DEMO_EMAIL} · {DEMO_PASSWORD}
+            </p>
+          ) : null}
         </div>
         <form className="stack" onSubmit={onSubmit}>
           <div className="field">

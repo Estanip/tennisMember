@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Source_Serif_4 } from "next/font/google";
+import { DemoBanner } from "@/components/demo-banner";
 import { AuthProvider } from "@/context/auth-context";
 import { ThemeProvider } from "@/context/theme-context";
 import { themeInitScript } from "@/lib/theme-script";
@@ -16,7 +17,7 @@ const display = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "Socios Backoffice",
+  title: "Administrador de Socios",
   description: "Gestión de socios del club de tenis",
 };
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
+          <DemoBanner />
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
       </body>
