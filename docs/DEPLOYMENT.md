@@ -145,6 +145,12 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 | `NEXT_PUBLIC_API_URL` | `https://<api-public-url>/api` — **requerida en build** |
 | `PORT` | Lo inyecta Railway |
 
+### Cache del frontend tras un deploy
+
+La web fuerza `Cache-Control: no-store` en documentos HTML y `dynamic = "force-dynamic"` en el layout raíz para que un reload normal pida el shell nuevo (que referencia chunks `/_next/static` con hash). Los assets estáticos siguen `immutable` (default de Next).
+
+**Pestañas ya abiertas** antes del deploy pueden seguir con el JS en memoria hasta un reload completo; no hace falta hard refresh en visitas nuevas.
+
 Orden sugerido:
 
 1. Crear Postgres + api + web y primer deploy.

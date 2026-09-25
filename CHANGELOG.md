@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Web: documentos HTML con `Cache-Control: no-store` + layout `force-dynamic` para evitar UI vieja tras deploy sin hard refresh
 - Agente: `.cursorrules` → `.cursor/rules/*.mdc` (protocolo genérico, sin stack; cierre con prueba reproducible del cambio)
 - Agente: rules de secretos, push solo con pedido, sync de `docs/*`, alcance de `PROCEDE` y ops destructivas
 - Web: topbar y layout mobile sin scroll horizontal (marca corta, nav en 2 filas, usuario oculto en pantallas chicas)
