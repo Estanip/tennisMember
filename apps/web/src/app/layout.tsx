@@ -16,6 +16,8 @@ const display = Source_Serif_4({
   subsets: ["latin"],
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Administrador de Socios",
   description: "Gestión de socios del club de tenis",
