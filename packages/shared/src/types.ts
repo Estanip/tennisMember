@@ -1,5 +1,7 @@
 import type {
   MemberAgeCategory,
+  MemberAuditAction,
+  MemberAuditSource,
   MemberCondition,
   MemberDeleteReason,
   MemberStatus,
@@ -145,6 +147,60 @@ export interface MemberImportResult {
   restored: number;
   skipped: MemberImportSkippedRow[];
   restoredRows: MemberImportRowIdentity[];
+}
+
+/** Persisted member columns at a point in time (no derived fields). Type alias so it is JSON-assignable. */
+export type MemberAuditSnapshot = {
+  id: string;
+  memberId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  dni: string;
+  /** ISO calendar date YYYY-MM-DD */
+  birthDate: string;
+  phone: string | null;
+  condition: MemberCondition;
+  /** Raw DB status (0–3) */
+  status: number;
+  deletedAt: string | null;
+  deletedReason: MemberDeleteReason | null;
+  deletedReasonDetail: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export interface MemberAuditActor {
+  userId: string;
+  name: string | null;
+  email: string | null;
+  role: UserRole | null;
+}
+
+export interface MemberAuditEntry {
+  id: string;
+  memberId: string;
+  action: MemberAuditAction;
+  source: MemberAuditSource;
+  /** Null when there is no backoffice user (e.g. Google Form) */
+  actor: MemberAuditActor | null;
+  before: MemberAuditSnapshot | null;
+  after: MemberAuditSnapshot;
+  changedFields: string[];
+  createdAt: string;
+}
+
+export interface MemberAuditListQuery {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedMemberAudit {
+  items: MemberAuditEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface BackofficeUser {
