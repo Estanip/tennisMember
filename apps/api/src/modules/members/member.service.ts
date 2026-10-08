@@ -2,13 +2,14 @@ import type { MemberCondition, Prisma } from "@prisma/client";
 import type {
   CreateMemberRequest,
   DeleteMemberRequest,
+  MemberAuditListQuery,
   MemberImportResult,
   MemberImportRowIdentity,
   MemberImportSkippedRow,
   MemberListQuery,
+  PaginatedMemberAudit,
   PaginatedMembers,
   UpdateMemberRequest,
-  UserRole,
 } from "@socios/shared";
 import {
   canManageUsers,
@@ -41,6 +42,12 @@ import {
   type MemberCreatedSource,
   notifyAdminNewMember,
 } from "../../notifications/member-alerts.js";
+import {
+  type MemberActor,
+  type MemberAuditContext,
+  recordMemberAudit,
+  toMemberAuditEntryDto,
+} from "./member-audit.js";
 import {
   buildMembersWorkbook,
   type ParsedMemberImportRow,
@@ -106,7 +113,7 @@ export class MemberService {
     return buildMembersWorkbook([], { includeExampleRow: true });
   }
 
-  async importFromExcel(buffer: Buffer): Promise<MemberImportResult> {
+  async importFromExcel(buffer: Buffer, actor: MemberActor): Promise<MemberImportResult> {
     const parsedRows = await parseMembersImportWorkbook(buffer);
     const skipped: MemberImportSkippedRow[] = [];
     const restoredRows: MemberImportRowIdentity[] = [];
@@ -129,7 +136,7 @@ export class MemberService {
 
       const identity = this.rowIdentity(parsed);
       try {
-        const outcome = await this.importOneRow(parsed);
+        const outcome = await this.importOneRow(parsed, { source: "IMPORT", actor });
         if (outcome === "created") {
           created += 1;
         } else if (outcome === "restored") {
@@ -163,7 +170,7 @@ export class MemberService {
 
   async create(
     input: CreateMemberRequest,
-    options: { source?: MemberCreatedSource; notify?: boolean } = {},
+    options: { source?: MemberCreatedSource; notify?: boolean; actor?: MemberActor | null } = {},
   ) {
     this.assertValidStatus(input.status);
     const firstName = this.assertValidNamePart(input.firstName, "first name");
@@ -175,6 +182,7 @@ export class MemberService {
     const phone = normalizePhone(input.phone);
     const source = options.source ?? "APP";
     const notify = options.notify !== false;
+    const auditContext: MemberAuditContext = { source, actor: options.actor ?? null };
 
     const existingByEmail = email ? await prisma.member.findFirst({ where: { email } }) : null;
 
@@ -216,22 +224,31 @@ export class MemberService {
     await this.assertMemberIdAvailable(memberId, restoreTarget?.id);
 
     if (restoreTarget) {
-      const restored = await prisma.member.update({
-        where: { id: restoreTarget.id },
-        data: {
-          firstName,
-          lastName,
-          email,
-          dni,
-          birthDate,
-          phone,
-          memberId,
-          condition: input.condition,
-          status: input.status,
-          deletedAt: null,
-          deletedReason: null,
-          deletedReasonDetail: null,
-        },
+      const restored = await prisma.$transaction(async (tx) => {
+        const updated = await tx.member.update({
+          where: { id: restoreTarget.id },
+          data: {
+            firstName,
+            lastName,
+            email,
+            dni,
+            birthDate,
+            phone,
+            memberId,
+            condition: input.condition,
+            status: input.status,
+            deletedAt: null,
+            deletedReason: null,
+            deletedReasonDetail: null,
+          },
+        });
+        await recordMemberAudit(tx, {
+          action: "RESTORE",
+          before: restoreTarget,
+          after: updated,
+          context: auditContext,
+        });
+        return updated;
       });
       const dto = toMemberDto(restored);
       log.info(
@@ -244,18 +261,27 @@ export class MemberService {
       return dto;
     }
 
-    const member = await prisma.member.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        dni,
-        birthDate,
-        phone,
-        memberId,
-        condition: input.condition,
-        status: input.status,
-      },
+    const member = await prisma.$transaction(async (tx) => {
+      const created = await tx.member.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          dni,
+          birthDate,
+          phone,
+          memberId,
+          condition: input.condition,
+          status: input.status,
+        },
+      });
+      await recordMemberAudit(tx, {
+        action: "CREATE",
+        before: null,
+        after: created,
+        context: auditContext,
+      });
+      return created;
     });
 
     const dto = toMemberDto(member);
@@ -277,7 +303,7 @@ export class MemberService {
     return dto;
   }
 
-  async update(id: string, input: UpdateMemberRequest, actor: { role: UserRole; userId: string }) {
+  async update(id: string, input: UpdateMemberRequest, actor: MemberActor) {
     const member = await prisma.member.findFirst({
       where: { id, deletedAt: null },
     });
@@ -343,25 +369,33 @@ export class MemberService {
       await this.assertMemberIdAvailable(externalMemberId, id);
     }
 
-    const updated = await prisma.member.update({
-      where: { id },
-      data: {
-        firstName:
-          input.firstName !== undefined
-            ? this.assertValidNamePart(input.firstName, "first name")
-            : undefined,
-        lastName:
-          input.lastName !== undefined
-            ? this.assertValidNamePart(input.lastName, "last name")
-            : undefined,
-        email,
-        dni,
-        birthDate,
-        phone: input.phone !== undefined ? normalizePhone(input.phone) : undefined,
-        memberId: externalMemberId,
-        condition: input.condition,
-        status: input.status,
-      },
+    const data: Prisma.MemberUpdateInput = {
+      firstName:
+        input.firstName !== undefined
+          ? this.assertValidNamePart(input.firstName, "first name")
+          : undefined,
+      lastName:
+        input.lastName !== undefined
+          ? this.assertValidNamePart(input.lastName, "last name")
+          : undefined,
+      email,
+      dni,
+      birthDate,
+      phone: input.phone !== undefined ? normalizePhone(input.phone) : undefined,
+      memberId: externalMemberId,
+      condition: input.condition,
+      status: input.status,
+    };
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.member.update({ where: { id }, data });
+      await recordMemberAudit(tx, {
+        action: "UPDATE",
+        before: member,
+        after: result,
+        context: { source: "APP", actor },
+      });
+      return result;
     });
 
     const dto = toMemberDto(updated);
@@ -372,7 +406,7 @@ export class MemberService {
     return dto;
   }
 
-  async softDelete(id: string, input: DeleteMemberRequest): Promise<void> {
+  async softDelete(id: string, input: DeleteMemberRequest, actor: MemberActor): Promise<void> {
     const member = await prisma.member.findUnique({ where: { id } });
 
     if (!member || member.status === MEMBER_STATUS.DELETED || member.deletedAt !== null) {
@@ -395,20 +429,29 @@ export class MemberService {
       );
     }
 
-    await prisma.member.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        status: MEMBER_STATUS.DELETED,
-        deletedReason: input.reason,
-        deletedReasonDetail: input.reason === MEMBER_DELETE_REASONS.OTRA ? detail : detail || null,
-      },
+    await prisma.$transaction(async (tx) => {
+      const deleted = await tx.member.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          status: MEMBER_STATUS.DELETED,
+          deletedReason: input.reason,
+          deletedReasonDetail:
+            input.reason === MEMBER_DELETE_REASONS.OTRA ? detail : detail || null,
+        },
+      });
+      await recordMemberAudit(tx, {
+        action: "DELETE",
+        before: member,
+        after: deleted,
+        context: { source: "APP", actor },
+      });
     });
 
     log.info({ memberId: id, reason: input.reason }, "Member soft-deleted");
   }
 
-  async restore(id: string) {
+  async restore(id: string, actor: MemberActor) {
     const member = await prisma.member.findUnique({ where: { id } });
 
     if (!member || (member.status !== MEMBER_STATUS.DELETED && member.deletedAt === null)) {
@@ -416,19 +459,60 @@ export class MemberService {
       throw new AppError("Deleted member not found", 404, "MEMBER_NOT_FOUND");
     }
 
-    const restored = await prisma.member.update({
-      where: { id },
-      data: {
-        deletedAt: null,
-        status: MEMBER_STATUS.ENABLED,
-        deletedReason: null,
-        deletedReasonDetail: null,
-      },
+    const restored = await prisma.$transaction(async (tx) => {
+      const result = await tx.member.update({
+        where: { id },
+        data: {
+          deletedAt: null,
+          status: MEMBER_STATUS.ENABLED,
+          deletedReason: null,
+          deletedReasonDetail: null,
+        },
+      });
+      await recordMemberAudit(tx, {
+        action: "RESTORE",
+        before: member,
+        after: result,
+        context: { source: "APP", actor },
+      });
+      return result;
     });
 
     const dto = toMemberDto(restored);
     log.info({ memberId: id }, "Member restored");
     return dto;
+  }
+
+  async listAudit(id: string, query: MemberAuditListQuery): Promise<PaginatedMemberAudit> {
+    const member = await prisma.member.findUnique({ where: { id }, select: { id: true } });
+    if (!member) {
+      log.warn({ memberId: id }, "Audit list failed: member not found");
+      throw new AppError("Member not found", 404, "MEMBER_NOT_FOUND");
+    }
+
+    const page = Math.max(query.page ?? DEFAULT_PAGE, 1);
+    const pageSize = Math.min(Math.max(query.pageSize ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
+    const where: Prisma.MemberAuditLogWhereInput = { memberId: id };
+
+    const [total, items] = await prisma.$transaction([
+      prisma.memberAuditLog.count({ where }),
+      prisma.memberAuditLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    log.debug({ memberId: id, page, pageSize, total }, "Listed member audit entries");
+
+    return {
+      items: items.map(toMemberAuditEntryDto),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
   }
 
   private assertValidStatus(status: number): void {
@@ -541,7 +625,10 @@ export class MemberService {
     };
   }
 
-  private async importOneRow(row: ParsedMemberImportRow): Promise<"created" | "restored"> {
+  private async importOneRow(
+    row: ParsedMemberImportRow,
+    auditContext: MemberAuditContext,
+  ): Promise<"created" | "restored"> {
     const firstName = this.assertValidNamePart(row.firstName, "first name");
     const lastName = this.assertValidNamePart(row.lastName, "last name");
     const email = this.resolveOptionalEmail(row.email);
@@ -590,9 +677,38 @@ export class MemberService {
       );
     }
 
-    if (deletedIds.length === 1) {
-      await prisma.member.update({
-        where: { id: deletedIds[0] },
+    const restoreTarget = deletedMatches.find((m) => m.id === deletedIds[0]);
+    if (restoreTarget) {
+      await prisma.$transaction(async (tx) => {
+        const restored = await tx.member.update({
+          where: { id: restoreTarget.id },
+          data: {
+            firstName,
+            lastName,
+            email,
+            dni,
+            birthDate,
+            phone,
+            memberId,
+            condition: row.condition,
+            status: row.status,
+            deletedAt: null,
+            deletedReason: null,
+            deletedReasonDetail: null,
+          },
+        });
+        await recordMemberAudit(tx, {
+          action: "RESTORE",
+          before: restoreTarget,
+          after: restored,
+          context: auditContext,
+        });
+      });
+      return "restored";
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.member.create({
         data: {
           firstName,
           lastName,
@@ -603,26 +719,14 @@ export class MemberService {
           memberId,
           condition: row.condition,
           status: row.status,
-          deletedAt: null,
-          deletedReason: null,
-          deletedReasonDetail: null,
         },
       });
-      return "restored";
-    }
-
-    await prisma.member.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        dni,
-        birthDate,
-        phone,
-        memberId,
-        condition: row.condition,
-        status: row.status,
-      },
+      await recordMemberAudit(tx, {
+        action: "CREATE",
+        before: null,
+        after: created,
+        context: auditContext,
+      });
     });
     return "created";
   }

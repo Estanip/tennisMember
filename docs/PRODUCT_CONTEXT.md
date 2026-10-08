@@ -88,6 +88,7 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 6. Alta automática desde Google Form en estado Habilitado (webhook).
 7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel); asunto/cuerpo según condición (Nuevo Socio / Nuevo Abonado Tenis).
 8. Exportar / importar socios en Excel (plantilla fija).
+9. Auditoría de socios: cada alta, edición, eliminación y restablecimiento registra quién lo hizo, cuándo, el origen (backoffice, Google Form o import Excel) y el estado anterior/posterior. Consulta solo SUPER_ADMIN (por ahora vía API; pantalla pendiente).
 
 ## Fuera de alcance (por ahora)
 

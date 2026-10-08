@@ -265,6 +265,21 @@
             "description": "Soft delete de socio (solo ADMIN). Motivos: FALTA_DE_PAGO | BAJA_DE_SOCIO | OTRA (detail obligatorio si OTRA)."
           },
           "response": []
+        },
+        {
+          "name": "Member audit history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/members/{{memberId}}/audit?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "members", "{{memberId}}", "audit"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "pageSize", "value": "10" }]
+            },
+            "description": "Historial de auditoría del socio (solo SUPER_ADMIN), más reciente primero. Cada entrada: action (CREATE | UPDATE | DELETE | RESTORE), source (APP | GOOGLE_FORM | IMPORT), actor (null en Google Form), before/after y changedFields."
+          },
+          "response": []
         }
       ]
     },
