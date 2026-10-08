@@ -24,6 +24,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { MemberAuditHistory } from "@/components/member-audit-history";
 import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api-client";
 
@@ -65,7 +66,7 @@ function formatImportIdentity(row: {
 }
 
 export default function MembersPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [data, setData] = useState<PaginatedMembers | null>(null);
   const [search, setSearch] = useState("");
   const [condition, setCondition] = useState<"" | MemberCondition>("");
@@ -83,6 +84,7 @@ export default function MembersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<MemberImportResult | null>(null);
+  const [memberForHistory, setMemberForHistory] = useState<Member | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -377,6 +379,15 @@ export default function MembersPage() {
                                     </button>
                                   </>
                                 )}
+                                {isSuperAdmin ? (
+                                  <button
+                                    type="button"
+                                    className="link-action"
+                                    onClick={() => setMemberForHistory(member)}
+                                  >
+                                    Historial
+                                  </button>
+                                ) : null}
                               </div>
                             </td>
                           ) : null}
@@ -566,6 +577,31 @@ export default function MembersPage() {
 
             <div className="actions">
               <button type="button" className="btn" onClick={closeImportModal} disabled={importing}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {memberForHistory ? (
+        <div className="modal-root">
+          <button
+            type="button"
+            className="modal-backdrop"
+            aria-label="Cerrar diálogo"
+            onClick={() => setMemberForHistory(null)}
+          />
+          <div
+            className="modal modal-wide card stack"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="member-history-title"
+          >
+            <h2 id="member-history-title">Historial · {memberForHistory.fullName}</h2>
+            <MemberAuditHistory memberId={memberForHistory.id} />
+            <div className="actions">
+              <button type="button" className="btn" onClick={() => setMemberForHistory(null)}>
                 Cerrar
               </button>
             </div>

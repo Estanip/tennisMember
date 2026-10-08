@@ -4,6 +4,7 @@ import type { CreateMemberRequest, Member } from "@socios/shared";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { MemberAuditHistory } from "@/components/member-audit-history";
 import { MemberForm } from "@/components/member-form";
 import { useAuth } from "@/context/auth-context";
 import { apiClient } from "@/lib/api-client";
@@ -67,6 +68,12 @@ export default function EditMemberPage() {
           initial={member}
           onSubmit={handleUpdate}
         />
+      ) : null}
+      {member && isSuperAdmin ? (
+        <section className="card stack audit-section">
+          <h2>Historial</h2>
+          <MemberAuditHistory memberId={member.id} />
+        </section>
       ) : null}
     </AppShell>
   );
