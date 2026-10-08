@@ -36,6 +36,23 @@ Autenticación de acceso al backoffice.
 
 Labels de UI para condición/estado/roles viven en `packages/shared`.
 
+## MemberAuditLog (auditoría de socios)
+
+Historial append-only de escrituras sobre socios (tabla `member_audit_log`). Se escribe en la **misma transacción** que el cambio del socio. No hay endpoint para editarlo ni borrarlo.
+
+| Campo | Notas |
+| --- | --- |
+| memberId | Socio afectado (columna `member_id`; sin FK para que el historial no dependa del registro) |
+| action | `CREATE` · `UPDATE` · `DELETE` (soft delete) · `RESTORE` (incluye reactivación vía alta/import de un eliminado) |
+| source | `APP` (backoffice) · `GOOGLE_FORM` (webhook) · `IMPORT` (Excel) |
+| actorUserId / actorName / actorEmail / actorRole | Usuario que hizo la acción, con copia de nombre/email/rol al momento; `null` en Google Form |
+| before | Snapshot JSON de las columnas del socio antes de la acción; `null` en `CREATE` |
+| after | Snapshot JSON después de la acción |
+| changedFields | Campos que cambiaron (ignora `updatedAt`). Un `UPDATE` sin cambios efectivos no genera entrada |
+| createdAt | Momento de la acción (columna `created_at`) |
+
+Los snapshots contienen datos personales (DNI, email, teléfono): la consulta está restringida a `SUPER_ADMIN`.
+
 ## ErrorLog
 
 Registro de errores del sistema (típicamente 5xx): message, stack, path, method, statusCode, userId, createdAt.

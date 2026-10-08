@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Auditoría de socios: tabla `member_audit_log` (acción, origen, actor, estado anterior/posterior y campos cambiados) escrita en la misma transacción que cada alta/edición/baja/restablecimiento (backoffice, Google Form e import Excel); consulta `GET /api/members/:id/audit` solo `SUPER_ADMIN`
 - Showcase/portfolio: banner **Modo demo** (`NEXT_PUBLIC_DEMO_MODE`) con hint de admin; login precarga credenciales; SQL `docs/showcase/demo-data.sql`.
 - Rol `SUPER_ADMIN` y gestión de usuarios del backoffice (`/users`, API `GET|POST|PATCH /api/users`)
 - Helpers de permisos en `@socios/shared` (`canManageMembers`, `canManageUsers`)

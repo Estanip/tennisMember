@@ -50,6 +50,11 @@ Aplicación: `apps/api` (Fastify 5.x).
 - Helper: `getLogger("module")` en `apps/api/src/lib/logger.ts`.
 - Secrets redactados: `Authorization`, `X-Webhook-Secret`.
 
+## Auditoría de socios
+
+- Toda escritura de socios en `MemberService` (alta, edición, soft delete, restablecimiento, import Excel, webhook Google Form) registra una entrada en `MemberAuditLog` dentro de la misma transacción (`apps/api/src/modules/members/member-audit.ts`).
+- Las rutas pasan el actor desde `request.user` (`memberActorFromJwt`); el webhook no tiene actor.
+
 ## Errores
 
 - Error handler global (4xx → `warn`, 5xx → `error` + persistencia).
@@ -73,6 +78,7 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `POST /api/members/import` — multipart `.xlsx` (ADMIN); máx. **2000** filas; magic bytes + MIME; alta parcial + resumen de omitidos/reactivados
 - `GET /api/members/:id` — autenticado
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo). En PATCH, si el socio ya tiene email, solo `SUPER_ADMIN` puede cambiarlo o vaciarlo (`403 EMAIL_LOCKED`)
+- `GET /api/members/:id/audit` — solo `SUPER_ADMIN`; historial de auditoría paginado (`page`, `pageSize` ≤ 100), más reciente primero; `404` si el socio no existe. Modelo: `MemberAuditLog` en `docs/MODELOS.md`
 - `GET|POST|PATCH /api/users` — solo `SUPER_ADMIN`
 - `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea socio Habilitado (`condition` opcional: `ABONADO_TENIS` default | `SOCIO_REGULAR`)
 
