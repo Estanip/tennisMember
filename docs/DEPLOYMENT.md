@@ -18,7 +18,7 @@
 | `yarn dev:api` | API (puerto desde `apps/api/.env` → `PORT`) |
 | `yarn dev:web` | Web (puerto desde `apps/web/.env.local` → `PORT`) |
 | `yarn build` / `yarn build:api` / `yarn build:web` | Builds |
-| `yarn start:api` / `yarn start:web` | Start de producción |
+| `yarn start:api` / `yarn start:web` | Start local de producción (en Railway: `node …` directo, ver abajo) |
 | `yarn format` / `yarn lint` / `yarn typecheck` | Calidad |
 
 ## Variables de entorno (local)
@@ -90,9 +90,19 @@ Build: los `buildCommand` usan `YARN_PRODUCTION=false` para instalar `devDepende
 falla el `tsc` / build de Next; si el build falla, Railway **no** corre `preDeployCommand`
 (migraciones) y sigue la imagen anterior.
 
-Migraciones API: usar **`preDeployCommand`** (campo válido en el schema de Railway).
-`releaseCommand` **no existe** y se ignora. Además `startCommand` corre
-`yarn db:migrate:deploy` antes de arrancar (idempotente) como red de seguridad.
+Migraciones API: **solo** en `preDeployCommand` (campo válido en el schema de Railway;
+`releaseCommand` **no existe** y se ignora). El pre-deploy debe estar activo (config-as-code
+o cargado a mano): el `startCommand` ya no migra, porque con Serverless corre en cada despertar.
+
+Start: `node …` directo (no `yarn start:*`). Los scripts Yarn dejan procesos residentes
+(Yarn ×2, `with-env.mjs`, shell) que suman ~200 MB de RAM y Railway cobra por RAM.
+`with-env.mjs` solo carga `.env` locales; en Railway las variables vienen del entorno.
+
+### Costos y Serverless
+
+Railway cobra casi todo por RAM residente, no por requests. `api` y `web` tienen
+**Serverless** (Settings → Serverless): duermen tras ~10 min sin tráfico y el primer request
+tarda unos segundos en despertarlos.
 
 ### Config files
 
@@ -108,13 +118,13 @@ En cada service: Settings → Config-as-code → path al archivo correspondiente
 
 - Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api`
 - Pre-deploy: `yarn db:migrate:deploy` (`preDeployCommand` en `railway.api.toml`)
-- Start: `yarn db:migrate:deploy && yarn start:api`
+- Start: `node apps/api/dist/index.js`
 - Healthcheck: `/health`
 
 **web**
 
 - Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:web`
-- Start: `yarn start:web`
+- Start: `node node_modules/next/dist/bin/next start apps/web`
 - Healthcheck: `/`
 
 ### Variables — service `api`

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Auditoría de socios: tabla `member_audit_log` (acción, origen, actor, estado anterior/posterior y campos cambiados) escrita en la misma transacción que cada alta/edición/baja/restablecimiento (backoffice, Google Form e import Excel); consulta `GET /api/members/:id/audit` solo `SUPER_ADMIN`
+- Web: historial de auditoría del socio (solo `SUPER_ADMIN`) en la edición del socio y como modal desde el listado (incluye eliminados)
 - Showcase/portfolio: banner **Modo demo** (`NEXT_PUBLIC_DEMO_MODE`) con hint de admin; login precarga credenciales; SQL `docs/showcase/demo-data.sql`.
 - Rol `SUPER_ADMIN` y gestión de usuarios del backoffice (`/users`, API `GET|POST|PATCH /api/users`)
 - Helpers de permisos en `@socios/shared` (`canManageMembers`, `canManageUsers`)
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Railway: start commands `node …` directos (API `node apps/api/dist/index.js`, web `next start apps/web`) en lugar de `yarn start:*` (menos RAM residente) y migraciones solo en `preDeployCommand` (el start ya no migra en cada despertar con Serverless)
 - Web: documentos HTML con `Cache-Control: no-store` + layout `force-dynamic` para evitar UI vieja tras deploy sin hard refresh
 - Agente: `.cursorrules` → `.cursor/rules/*.mdc` (protocolo genérico, sin stack; cierre con prueba reproducible del cambio)
 - Agente: rules de secretos, push solo con pedido, sync de `docs/*`, alcance de `PROCEDE` y ops destructivas

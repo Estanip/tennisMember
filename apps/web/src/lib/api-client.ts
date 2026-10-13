@@ -8,8 +8,10 @@ import type {
   LoginRequest,
   LoginResponse,
   Member,
+  MemberAuditListQuery,
   MemberImportResult,
   MemberListQuery,
+  PaginatedMemberAudit,
   PaginatedMembers,
   PaginatedUsers,
   UpdateMemberRequest,
@@ -134,6 +136,17 @@ class ApiClient {
     return this.request<Member>(`/members/${id}/restore`, {
       method: "POST",
     });
+  }
+
+  async getMemberAudit(
+    id: string,
+    query: MemberAuditListQuery = {},
+  ): Promise<PaginatedMemberAudit> {
+    const params = new URLSearchParams();
+    if (query.page) params.set("page", String(query.page));
+    if (query.pageSize) params.set("pageSize", String(query.pageSize));
+    const qs = params.toString();
+    return this.request<PaginatedMemberAudit>(`/members/${id}/audit${qs ? `?${qs}` : ""}`);
   }
 
   async listUsers(query: UserListQuery = {}): Promise<PaginatedUsers> {

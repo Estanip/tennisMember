@@ -10,9 +10,10 @@ buildCommand = "YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn bui
 
 [deploy]
 # Migraciones: el schema de Railway usa preDeployCommand (releaseCommand no existe y se ignora).
-# startCommand también corre migrate deploy (idempotente) por si el pre-deploy no está cableado.
+# Solo en pre-deploy: con Serverless el start corre en cada despertar.
 preDeployCommand = "yarn db:migrate:deploy"
-startCommand = "yarn db:migrate:deploy && yarn start:api"
+# node directo: `yarn start:api` deja procesos Yarn residentes (~100 MB c/u).
+startCommand = "node apps/api/dist/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
