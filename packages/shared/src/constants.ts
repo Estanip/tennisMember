@@ -390,6 +390,49 @@ export function isValidMemberDeleteReasonDetail(
   return trimmed.length <= MEMBER_DELETE_REASON_DETAIL_MAX_LENGTH;
 }
 
+export const MEMBER_AUDIT_ACTIONS = {
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  DELETE: "DELETE",
+  RESTORE: "RESTORE",
+} as const;
+
+export type MemberAuditAction = (typeof MEMBER_AUDIT_ACTIONS)[keyof typeof MEMBER_AUDIT_ACTIONS];
+
+export const MEMBER_AUDIT_ACTION_VALUES: MemberAuditAction[] = [
+  MEMBER_AUDIT_ACTIONS.CREATE,
+  MEMBER_AUDIT_ACTIONS.UPDATE,
+  MEMBER_AUDIT_ACTIONS.DELETE,
+  MEMBER_AUDIT_ACTIONS.RESTORE,
+];
+
+export const MEMBER_AUDIT_ACTION_LABELS: Record<MemberAuditAction, string> = {
+  [MEMBER_AUDIT_ACTIONS.CREATE]: "Alta",
+  [MEMBER_AUDIT_ACTIONS.UPDATE]: "Edición",
+  [MEMBER_AUDIT_ACTIONS.DELETE]: "Eliminación",
+  [MEMBER_AUDIT_ACTIONS.RESTORE]: "Restablecimiento",
+};
+
+export const MEMBER_AUDIT_SOURCES = {
+  APP: "APP",
+  GOOGLE_FORM: "GOOGLE_FORM",
+  IMPORT: "IMPORT",
+} as const;
+
+export type MemberAuditSource = (typeof MEMBER_AUDIT_SOURCES)[keyof typeof MEMBER_AUDIT_SOURCES];
+
+export const MEMBER_AUDIT_SOURCE_VALUES: MemberAuditSource[] = [
+  MEMBER_AUDIT_SOURCES.APP,
+  MEMBER_AUDIT_SOURCES.GOOGLE_FORM,
+  MEMBER_AUDIT_SOURCES.IMPORT,
+];
+
+export const MEMBER_AUDIT_SOURCE_LABELS: Record<MemberAuditSource, string> = {
+  [MEMBER_AUDIT_SOURCES.APP]: "Backoffice",
+  [MEMBER_AUDIT_SOURCES.GOOGLE_FORM]: "Google Form",
+  [MEMBER_AUDIT_SOURCES.IMPORT]: "Importación Excel",
+};
+
 /** Excel import/export column headers (must match template exactly). */
 export const MEMBER_EXCEL_HEADERS = {
   memberId: "Nro. Socio",

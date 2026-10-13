@@ -515,6 +515,61 @@ a.link-action {
   min-height: 4.5rem;
 }
 
+.modal.modal-wide {
+  width: min(48rem, 100%);
+  max-height: min(90vh, 48rem);
+}
+
+.audit-section {
+  margin-top: 1.25rem;
+}
+
+.audit-section h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.audit-entry {
+  display: grid;
+  gap: 0.4rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.audit-entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.audit-entry-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.audit-entry-date {
+  font-weight: 600;
+}
+
+.audit-entry-actor {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.audit-changes {
+  font-size: 0.85rem;
+}
+
 .error {
   color: var(--danger);
   margin: 0;

@@ -8,7 +8,7 @@ Aplicación: `apps/web` (Next.js 16 App Router, React 19, TypeScript estricto).
 - Sesión vía cookie **httpOnly** (`socios_token`) con `credentials: "include"`; no se guarda JWT en `localStorage`.
 - `POST /auth/logout` limpia la cookie. Bearer JWT sigue válido para Postman/Swagger.
 - `ADMIN` y `SUPER_ADMIN`: crear, editar y eliminar socios en UI.
-- `SUPER_ADMIN`: además sección `/users` para gestionar usuarios y roles.
+- `SUPER_ADMIN`: además sección `/users` para gestionar usuarios y roles, e historial de auditoría de socios.
 - `USER`: solo listado/consulta; sin acciones de escritura ni rutas de alta/edición.
 
 ## API client
@@ -31,6 +31,7 @@ Plantilla: `apps/web/.env.example`.
   - Listado de socios (búsqueda, filtros condición/estado incl. Pendiente, paginación)
   - Exportar listado a Excel; importar desde plantilla `.xlsx` (admin) con modal de resultado
   - Alta y edición de socios (email opcional; si ya existe, solo SUPER_ADMIN lo edita)
+  - Historial de auditoría del socio (solo SUPER_ADMIN): sección "Historial" en `/members/[id]` y botón "Historial" en el listado (modal; incluye socios eliminados). Componente `MemberAuditHistory`: fecha, acción, origen, usuario y tabla Campo / Antes / Después con "Ver más"
 
 ## Convenciones
 

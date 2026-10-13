@@ -73,6 +73,42 @@ model Member {
   @@map("members")
 }
 
+enum MemberAuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+}
+
+enum MemberAuditSource {
+  APP
+  GOOGLE_FORM
+  IMPORT
+}
+
+/// Append-only history of member writes. No FK on memberId so entries outlive member changes.
+model MemberAuditLog {
+  id            String            @id @default(cuid())
+  memberId      String            @map("member_id")
+  action        MemberAuditAction
+  source        MemberAuditSource
+  /// Null when there is no backoffice user (e.g. Google Form webhook)
+  actorUserId   String?           @map("actor_user_id")
+  actorName     String?           @map("actor_name")
+  actorEmail    String?           @map("actor_email")
+  actorRole     UserRole?         @map("actor_role")
+  /// Full member snapshot before the action; null on CREATE
+  before        Json?
+  after         Json
+  changedFields String[]          @map("changed_fields")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@index([memberId, createdAt])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@map("member_audit_log")
+}
+
 model ErrorLog {
   id        String   @id @default(cuid())
   message   String

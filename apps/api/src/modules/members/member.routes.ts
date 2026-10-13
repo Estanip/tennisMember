@@ -1,15 +1,19 @@
 import {
   MEMBER_AGE_CATEGORIES,
+  MEMBER_AUDIT_ACTION_VALUES,
+  MEMBER_AUDIT_SOURCE_VALUES,
   MEMBER_CONDITIONS,
   MEMBER_DELETE_REASON_VALUES,
   MEMBER_EDITABLE_STATUS_VALUES,
   MEMBER_EMAIL_PATTERN,
   MEMBER_EXTERNAL_ID_MAX_LENGTH,
   MEMBER_STATUS_VALUES,
+  USER_ROLE_VALUES,
 } from "@socios/shared";
 import type { FastifyInstance } from "fastify";
 import { AppError } from "../../lib/errors.js";
 import { MemberService } from "./member.service.js";
+import { memberActorFromJwt } from "./member-audit.js";
 import { assertXlsxUploadMeta } from "./member-excel.js";
 
 /** Aligned with `@socios/shared` — avoid AJV `format: email` (stricter / mismatched). */
@@ -70,6 +74,88 @@ const memberSchema = {
     deletedReasonDetail: { type: ["string", "null"] },
     createdAt: { type: "string" },
     updatedAt: { type: "string" },
+  },
+} as const;
+
+const memberAuditSnapshotSchema = {
+  type: "object",
+  required: [
+    "id",
+    "memberId",
+    "firstName",
+    "lastName",
+    "email",
+    "dni",
+    "birthDate",
+    "phone",
+    "condition",
+    "status",
+    "deletedAt",
+    "deletedReason",
+    "deletedReasonDetail",
+    "createdAt",
+    "updatedAt",
+  ],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    memberId: { type: ["string", "null"] },
+    firstName: { type: "string" },
+    lastName: { type: "string" },
+    email: { type: ["string", "null"] },
+    dni: { type: "string" },
+    birthDate: { type: "string" },
+    phone: { type: ["string", "null"] },
+    condition: {
+      type: "string",
+      enum: [MEMBER_CONDITIONS.SOCIO_REGULAR, MEMBER_CONDITIONS.ABONADO_TENIS],
+    },
+    status: { type: "integer" },
+    deletedAt: { type: ["string", "null"] },
+    deletedReason: {
+      type: ["string", "null"],
+      enum: [...MEMBER_DELETE_REASON_VALUES, null],
+    },
+    deletedReasonDetail: { type: ["string", "null"] },
+    createdAt: { type: "string" },
+    updatedAt: { type: "string" },
+  },
+} as const;
+
+const memberAuditEntrySchema = {
+  type: "object",
+  required: [
+    "id",
+    "memberId",
+    "action",
+    "source",
+    "actor",
+    "before",
+    "after",
+    "changedFields",
+    "createdAt",
+  ],
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    memberId: { type: "string" },
+    action: { type: "string", enum: [...MEMBER_AUDIT_ACTION_VALUES] },
+    source: { type: "string", enum: [...MEMBER_AUDIT_SOURCE_VALUES] },
+    actor: {
+      type: ["object", "null"],
+      required: ["userId", "name", "email", "role"],
+      additionalProperties: false,
+      properties: {
+        userId: { type: "string" },
+        name: { type: ["string", "null"] },
+        email: { type: ["string", "null"] },
+        role: { type: ["string", "null"], enum: [...USER_ROLE_VALUES, null] },
+      },
+    },
+    before: { anyOf: [{ type: "null" }, memberAuditSnapshotSchema] },
+    after: memberAuditSnapshotSchema,
+    changedFields: { type: "array", items: { type: "string" } },
+    createdAt: { type: "string" },
   },
 } as const;
 
@@ -367,7 +453,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
       }
       assertXlsxUploadMeta(file.filename, file.mimetype);
       const buffer = await file.toBuffer();
-      const data = await memberService.importFromExcel(buffer);
+      const data = await memberService.importFromExcel(buffer, memberActorFromJwt(request.user));
       return reply.send({ success: true, data });
     },
   );
@@ -438,7 +524,9 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
-      const data = await memberService.create(request.body as never);
+      const data = await memberService.create(request.body as never, {
+        actor: memberActorFromJwt(request.user),
+      });
       return reply.status(201).send({ success: true, data, message: "Member created" });
     },
   );
@@ -480,10 +568,11 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const data = await memberService.update(id, request.body as never, {
-        role: request.user.role,
-        userId: request.user.sub,
-      });
+      const data = await memberService.update(
+        id,
+        request.body as never,
+        memberActorFromJwt(request.user),
+      );
       return reply.send({ success: true, data, message: "Member updated" });
     },
   );
@@ -524,7 +613,7 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      await memberService.softDelete(id, request.body as never);
+      await memberService.softDelete(id, request.body as never, memberActorFromJwt(request.user));
       return reply.send({ success: true, message: "Member deleted" });
     },
   );
@@ -564,8 +653,67 @@ export async function memberRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const data = await memberService.restore(id);
+      const data = await memberService.restore(id, memberActorFromJwt(request.user));
       return reply.send({ success: true, data, message: "Member restored" });
+    },
+  );
+
+  app.get(
+    "/members/:id/audit",
+    {
+      preHandler: [app.requireSuperAdmin],
+      schema: {
+        tags: ["Members"],
+        summary: "Member audit history, newest first (SUPER_ADMIN)",
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: "object",
+          required: ["id"],
+          additionalProperties: false,
+          properties: {
+            id: { type: "string" },
+          },
+        },
+        querystring: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            page: { type: "integer", minimum: 1 },
+            pageSize: { type: "integer", minimum: 1, maximum: 100 },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            required: ["success", "data"],
+            additionalProperties: false,
+            properties: {
+              success: { type: "boolean" },
+              data: {
+                type: "object",
+                required: ["items", "total", "page", "pageSize", "totalPages"],
+                additionalProperties: false,
+                properties: {
+                  items: { type: "array", items: memberAuditEntrySchema },
+                  total: { type: "integer" },
+                  page: { type: "integer" },
+                  pageSize: { type: "integer" },
+                  totalPages: { type: "integer" },
+                },
+              },
+            },
+          },
+          401: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const query = request.query as { page?: number; pageSize?: number };
+      const data = await memberService.listAudit(id, query);
+      return reply.send({ success: true, data });
     },
   );
 }
