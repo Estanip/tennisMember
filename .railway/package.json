@@ -1,0 +1,9 @@
+{
+  "name": "socios-railway-iac",
+  "private": true,
+  "description": "Railway IaC SDK, kept out of the root workspace: railway requires Node >=22 and the Railway build runs Node 20.",
+  "type": "module",
+  "devDependencies": {
+    "railway": "^3.15.0"
+  }
+}
