@@ -11,7 +11,9 @@ builder = "RAILPACK"
 buildCommand = "YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:web"
 
 [deploy]
-startCommand = "yarn start:web"
+# node directo: `yarn start:web` suma Yarn + with-env + shell residentes. En Railway las
+# variables vienen del entorno (with-env solo carga .env locales).
+startCommand = "node node_modules/next/dist/bin/next start apps/web"
 healthcheckPath = "/"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
