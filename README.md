@@ -46,7 +46,7 @@ Guía completa (servicios, comandos, variables): [`docs/DEPLOYMENT.md`](./docs/D
 **api:** `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `GOOGLE_FORM_WEBHOOK_SECRET`, `HOST=0.0.0.0`  
 **web:** `NEXT_PUBLIC_API_URL` (build-time, `https://<api>/api`)
 
-Configs de ejemplo: `railway.api.toml`, `railway.web.toml`.
+Config de build/deploy: [`.railway/railway.ts`](./.railway/railway.ts) (Railway Infrastructure as Code).
 
 ## Postman
 
