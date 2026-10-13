@@ -66,7 +66,7 @@ Antes de pushear a `main`/`master` (o de afirmar que CI/deploy van a pasar):
 2. `yarn typecheck` (requiere poder correr `prisma generate`; en CI se usa un `DATABASE_URL` dummy)
 3. `yarn build` con `NEXT_PUBLIC_API_URL` definida (como en CI)
 4. Si tocaste Railway / migraciones / scripts de build:
-   - Revisar `railway.api.toml` / `railway.web.toml` (builder Railpack, `YARN_PRODUCTION=false`, `preDeployCommand` de migraciones en API)
+   - Revisar `.railway/railway.ts` (builder Railpack, `YARN_PRODUCTION=false`, `preDeploy` de migraciones en API) y correr `railway config plan`; aplicar con `railway config apply` solo si el plan muestra lo esperado
    - Confirmar que un deploy fallido **no** aplica migraciones y deja la imagen anterior
 
 Commits: Conventional Commits; **sin** `Co-authored-by` de Cursor u otras IAs (ver `.cursor/rules/`).
@@ -83,7 +83,7 @@ Repo: `Estanip/tennisMember` (privado).
 
 Root Directory de ambos services de app: `/` (raíz del monorepo).
 
-Builder: **Railpack** (`builder = "RAILPACK"` en los toml). Nixpacks está deprecado en Railway.
+Builder: **Railpack** (`builder: "RAILPACK"` en `.railway/railway.ts`). Nixpacks está deprecado en Railway.
 
 Build: los `buildCommand` usan `YARN_PRODUCTION=false` para instalar `devDependencies`
 (`typescript`, `@types/node`, etc.). Sin eso, con `NODE_ENV=production` Yarn las omite y
@@ -91,8 +91,8 @@ falla el `tsc` / build de Next; si el build falla, Railway **no** corre `preDepl
 (migraciones) y sigue la imagen anterior.
 
 Migraciones API: **solo** en `preDeployCommand` (campo válido en el schema de Railway;
-`releaseCommand` **no existe** y se ignora). El pre-deploy debe estar activo (config-as-code
-o cargado a mano): el `startCommand` ya no migra, porque con Serverless corre en cada despertar.
+`releaseCommand` **no existe** y se ignora). El pre-deploy debe estar activo (`preDeploy` en
+`.railway/railway.ts`): el `startCommand` ya no migra, porque con Serverless corre en cada despertar.
 
 Start: `node …` directo (no `yarn start:*`). Los scripts Yarn dejan procesos residentes
 (Yarn ×2, `with-env.mjs`, shell) que suman ~200 MB de RAM y Railway cobra por RAM.
@@ -104,28 +104,37 @@ Railway cobra casi todo por RAM residente, no por requests. `api` y `web` tienen
 **Serverless** (Settings → Serverless): duermen tras ~10 min sin tráfico y el primer request
 tarda unos segundos en despertarlos.
 
-### Config files
+### Infrastructure as Code (`.railway/railway.ts`)
 
-| Service | Archivo en el repo |
-| --- | --- |
-| api | `railway.api.toml` |
-| web | `railway.web.toml` |
+La configuración de build/deploy de `api` y `web` vive en `.railway/railway.ts` (Railway IaC, SDK `railway` como devDependency). Reemplaza a Config as Code (`railway.*.toml`), que Railway deja de leer el 2026-12-01. El campo **Settings → Config-as-code → Railway Config File** de ambos services debe quedar **vacío**.
 
-En cada service: Settings → Config-as-code → path al archivo correspondiente  
-**o** pegá a mano:
+- Variables: `variables: { managed: false }` → IaC **no** lee ni escribe variables (se gestionan en el dashboard).
+- No hay base de datos declarada en el proyecto: un `apply` borra recursos omitidos del archivo, así que revisar siempre el plan antes de aplicar.
+
+Flujo (CLI ≥ 5.42.1, proyecto vinculado con `railway link`):
+
+```bash
+railway config plan    # solo lectura; debe mostrar únicamente los cambios esperados
+railway config apply   # aplica tras confirmar; sin --confirm-destructive rechaza borrados
+```
+
+En Windows con la CLI instalada por npm, el SDK no puede ejecutar el shim `railway.cmd` y falla con "requires Railway CLI 5.42.1 or newer". Workaround (Git Bash): anteponer al `PATH` la carpeta del binario real, por ejemplo `export PATH="$(npm root -g)/@railway/cli/bin:$PATH"`, y correr `env _=railway railway config plan`.
+
+Valores actuales:
 
 **api**
 
 - Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:api`
-- Pre-deploy: `yarn db:migrate:deploy` (`preDeployCommand` en `railway.api.toml`)
+- Pre-deploy: `yarn db:migrate:deploy`
 - Start: `node apps/api/dist/index.js`
-- Healthcheck: `/health`
+- Healthcheck: `/health` (timeout 30 s) · reinicio ON_FAILURE, máx. 5
 
 **web**
 
 - Build: `YARN_PRODUCTION=false yarn install --frozen-lockfile && yarn build:web`
 - Start: `node node_modules/next/dist/bin/next start apps/web`
-- Healthcheck: `/`
+- Healthcheck: `/` (timeout 60 s) · reinicio ON_FAILURE, máx. 5
+- Dominio: `socios.reservame-alem.com.ar`
 
 ### Variables — service `api`
 
