@@ -106,14 +106,17 @@ tarda unos segundos en despertarlos.
 
 ### Infrastructure as Code (`.railway/railway.ts`)
 
-La configuración de build/deploy de `api` y `web` vive en `.railway/railway.ts` (Railway IaC, SDK `railway` como devDependency). Reemplaza a Config as Code (`railway.*.toml`), que Railway deja de leer el 2026-12-01. El campo **Settings → Config-as-code → Railway Config File** de ambos services debe quedar **vacío**.
+La configuración de build/deploy de `api` y `web` vive en `.railway/railway.ts` (Railway IaC). Reemplaza a Config as Code (`railway.*.toml`), que Railway deja de leer el 2026-12-01. El campo **Settings → Config-as-code → Railway Config File** de ambos services debe quedar **vacío**.
 
 - Variables: `variables: { managed: false }` → IaC **no** lee ni escribe variables (se gestionan en el dashboard).
 - No hay base de datos declarada en el proyecto: un `apply` borra recursos omitidos del archivo, así que revisar siempre el plan antes de aplicar.
 
-Flujo (CLI ≥ 5.42.1, proyecto vinculado con `railway link`):
+El SDK `railway` vive en `.railway/package.json` (con su `package-lock.json`), **fuera** de los workspaces: exige Node ≥ 22 y el build de Railway corre Node 20, así que en la raíz rompe `yarn install --frozen-lockfile`. No agregarlo al `package.json` raíz.
+
+Flujo (CLI ≥ 5.42.1, Node ≥ 22 local, proyecto vinculado con `railway link`):
 
 ```bash
+(cd .railway && npm ci)   # una vez, instala el SDK localmente
 railway config plan    # solo lectura; debe mostrar únicamente los cambios esperados
 railway config apply   # aplica tras confirmar; sin --confirm-destructive rechaza borrados
 ```
