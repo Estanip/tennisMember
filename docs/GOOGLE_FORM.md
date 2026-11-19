@@ -5,12 +5,26 @@ Alta automática de aspirantes desde el form
 
 ## Resultado en el padrón
 
-Cada envío crea un socio con:
+Cada envío **crea** un socio (o **actualiza** en el caso de upgrade abajo) con:
 
 - `condition` = la enviada en el payload (`ABONADO_TENIS` o `SOCIO_REGULAR`). Si se omite → `ABONADO_TENIS` (compatibilidad con scripts viejos)
 - `status` = `1` (Habilitado)
 - Campos: email, nombre, apellido, DNI, fecha de nacimiento, teléfono
 - La edad y la categoría (Adulto/Menor) se calculan al consultar (Menor = edad &lt; 14)
+
+### Upgrade Socio Regular → Abonado Tenis
+
+Si la persona ya está en el padrón como **Socio Regular** `Habilitado` y completa el form de **abonado** con el **mismo email y el mismo DNI**, el webhook **no falla**: actualiza solo `condition` a `ABONADO_TENIS` (auditoría `GOOGLE_FORM` + alerta al admin). No pisa nombre/teléfono/fecha.
+
+| Situación | Resultado |
+| --- | --- |
+| Email nuevo | Alta (`201`, `outcome: created`) |
+| Socio Regular habilitado + form abonado (mismo email+DNI) | Upgrade (`200`, `outcome: upgraded`) |
+| Ya Abonado Tenis + form abonado (mismo email+DNI) | Idempotente (`200`, `outcome: unchanged`) |
+| Email existe con otro DNI | `409 IDENTITY_MISMATCH` |
+| Existe pero no está Habilitado | `409 MEMBER_NOT_ENABLED` (revisión en backoffice) |
+| Intento de bajar Abonado → Socio Regular | `409 EMAIL_TAKEN` |
+| Socio eliminado (soft delete) | Restablece vía alta (`201`, `outcome: restored`) |
 
 Podés reutilizar **el mismo webhook URL y el mismo `WEBHOOK_SECRET`** en dos formularios: solo cambiá `MEMBER_CONDITION` en el Apps Script de cada uno.
 

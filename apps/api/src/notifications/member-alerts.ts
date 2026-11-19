@@ -21,12 +21,7 @@ export function buildNewMemberAlertContent(
 ): { subject: string; text: string; html: string } {
   const statusLabel = MEMBER_STATUS_LABELS[member.status] ?? String(member.status);
   const conditionLabel = MEMBER_CONDITION_LABELS[member.condition] ?? member.condition;
-  const sourceLabel =
-    source === "GOOGLE_FORM"
-      ? "Google Form"
-      : source === "IMPORT"
-        ? "Importación Excel"
-        : "Backoffice";
+  const origin = sourceLabel(source);
 
   const isAbonado = member.condition === MEMBER_CONDITIONS.ABONADO_TENIS;
   const kindLabel = isAbonado ? "Abonado Tenis" : "Socio";
@@ -38,7 +33,7 @@ export function buildNewMemberAlertContent(
   const text = [
     intro,
     "",
-    `Origen: ${sourceLabel}`,
+    `Origen: ${origin}`,
     `Nombre: ${member.firstName}`,
     `Apellido: ${member.lastName}`,
     `Email: ${member.email ?? "—"}`,
@@ -56,7 +51,7 @@ export function buildNewMemberAlertContent(
     <div style="font-family:system-ui,sans-serif;line-height:1.5">
       <p>${escapeHtml(intro)}</p>
       <ul>
-        <li><strong>Origen:</strong> ${escapeHtml(sourceLabel)}</li>
+        <li><strong>Origen:</strong> ${escapeHtml(origin)}</li>
         <li><strong>Nombre:</strong> ${escapeHtml(member.firstName)}</li>
         <li><strong>Apellido:</strong> ${escapeHtml(member.lastName)}</li>
         <li><strong>Email:</strong> ${escapeHtml(member.email ?? "—")}</li>
@@ -66,6 +61,55 @@ export function buildNewMemberAlertContent(
         <li><strong>Categoría:</strong> ${member.ageCategory === "MENOR" ? "Menor" : "Adulto"}</li>
         <li><strong>Teléfono:</strong> ${escapeHtml(member.phone ?? "—")}</li>
         <li><strong>Condición:</strong> ${escapeHtml(conditionLabel)}</li>
+        <li><strong>Estado:</strong> ${escapeHtml(statusLabel)}</li>
+        <li><strong>Id:</strong> ${escapeHtml(member.id)}</li>
+      </ul>
+    </div>
+  `.trim();
+
+  return { subject, text, html };
+}
+
+function sourceLabel(source: MemberCreatedSource): string {
+  if (source === "GOOGLE_FORM") return "Google Form";
+  if (source === "IMPORT") return "Importación Excel";
+  return "Backoffice";
+}
+
+export function buildUpgradedToAbonadoAlertContent(
+  member: Member,
+  source: MemberCreatedSource,
+): { subject: string; text: string; html: string } {
+  const statusLabel = MEMBER_STATUS_LABELS[member.status] ?? String(member.status);
+  const origin = sourceLabel(source);
+  const subject = `[Socios] Socio pasó a Abonado Tenis: ${member.fullName}`;
+  const intro = "Un socio regular pasó a abonado tenis en el padrón.";
+
+  const text = [
+    intro,
+    "",
+    `Origen: ${origin}`,
+    `Nombre: ${member.firstName}`,
+    `Apellido: ${member.lastName}`,
+    `Email: ${member.email ?? "—"}`,
+    `DNI: ${member.dni}`,
+    `Teléfono: ${member.phone ?? "—"}`,
+    `Condición: ${MEMBER_CONDITION_LABELS[MEMBER_CONDITIONS.ABONADO_TENIS]}`,
+    `Estado: ${statusLabel}`,
+    `Id: ${member.id}`,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;line-height:1.5">
+      <p>${escapeHtml(intro)}</p>
+      <ul>
+        <li><strong>Origen:</strong> ${escapeHtml(origin)}</li>
+        <li><strong>Nombre:</strong> ${escapeHtml(member.firstName)}</li>
+        <li><strong>Apellido:</strong> ${escapeHtml(member.lastName)}</li>
+        <li><strong>Email:</strong> ${escapeHtml(member.email ?? "—")}</li>
+        <li><strong>DNI:</strong> ${escapeHtml(member.dni)}</li>
+        <li><strong>Teléfono:</strong> ${escapeHtml(member.phone ?? "—")}</li>
+        <li><strong>Condición:</strong> ${escapeHtml(MEMBER_CONDITION_LABELS[MEMBER_CONDITIONS.ABONADO_TENIS])}</li>
         <li><strong>Estado:</strong> ${escapeHtml(statusLabel)}</li>
         <li><strong>Id:</strong> ${escapeHtml(member.id)}</li>
       </ul>
@@ -96,5 +140,32 @@ export async function notifyAdminNewMember(
     log.info({ to, source, memberId: member.id }, "New-member alert sent");
   } catch (error) {
     log.error({ err: error, to, source, memberId: member.id }, "Failed to send new-member alert");
+  }
+}
+
+/**
+ * Notifies ADMIN_ALERT_EMAIL after Socio Regular → Abonado Tenis via Google Form.
+ * Failures are logged and do not throw.
+ */
+export async function notifyAdminMemberUpgradedToAbonado(
+  member: Member,
+  source: MemberCreatedSource,
+): Promise<void> {
+  const to = process.env.ADMIN_ALERT_EMAIL?.trim();
+  if (!to) {
+    log.warn("ADMIN_ALERT_EMAIL is not set; skipping upgrade-to-abonado alert");
+    return;
+  }
+
+  const content = buildUpgradedToAbonadoAlertContent(member, source);
+
+  try {
+    await getEmailProvider().send({ to, ...content });
+    log.info({ to, source, memberId: member.id }, "Upgrade-to-abonado alert sent");
+  } catch (error) {
+    log.error(
+      { err: error, to, source, memberId: member.id },
+      "Failed to send upgrade-to-abonado alert",
+    );
   }
 }

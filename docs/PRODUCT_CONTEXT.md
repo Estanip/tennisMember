@@ -73,8 +73,10 @@ Campos del form → socio:
 
 Defaults al crear desde el form:
 
-- `condition` = Abonado Tenis
+- `condition` = Abonado Tenis (o Socio Regular según el Apps Script del form)
 - `status` = Habilitado (`1`)
+
+Si ya existe un **Socio Regular** habilitado con el mismo email y DNI y el form pide Abonado Tenis, el sistema **actualiza la condición** a Abonado Tenis (sin alta duplicada ni edición manual). Detalle: `docs/GOOGLE_FORM.md`.
 
 Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE_FORM.md`).
 
@@ -85,8 +87,8 @@ Integración: Apps Script → `POST /api/webhooks/google-form` (ver `docs/GOOGLE
 3. Alta (crear) de socios — solo ADMIN.
 4. Edición de socios — solo ADMIN (email ya seteado: solo SUPER_ADMIN puede cambiarlo/vaciarlo).
 5. Soft delete de socios — solo ADMIN.
-6. Alta automática desde Google Form en estado Habilitado (webhook).
-7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel); asunto/cuerpo según condición (Nuevo Socio / Nuevo Abonado Tenis).
+6. Alta automática desde Google Form en estado Habilitado (webhook); upgrade automático Socio Regular → Abonado Tenis si el mismo email+DNI completa el form de abonado estando Habilitado.
+7. Alerta por email al administrador cuando se crea un socio (app o Google Form; no en import Excel); asunto/cuerpo según condición (Nuevo Socio / Nuevo Abonado Tenis); y alerta específica si un socio pasa a Abonado Tenis vía form.
 8. Exportar / importar socios en Excel (plantilla fija).
 9. Auditoría de socios: cada alta, edición, eliminación y restablecimiento registra quién lo hizo, cuándo, el origen (backoffice, Google Form o import Excel) y el estado anterior/posterior. Consulta solo SUPER_ADMIN (historial en la edición del socio y desde el listado, incluidos eliminados).
 

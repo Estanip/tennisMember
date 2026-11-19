@@ -7,6 +7,8 @@ import { MemberService } from "../members/member.service.js";
 
 const log = getLogger("webhook");
 
+export type GoogleFormSubmitOutcome = "created" | "restored" | "upgraded" | "unchanged";
+
 export class GoogleFormWebhookService {
   constructor(private readonly members: MemberService = new MemberService()) {}
 
@@ -22,7 +24,10 @@ export class GoogleFormWebhookService {
     }
   }
 
-  async createFromForm(payload: GoogleFormMemberPayload): Promise<Member> {
+  async createFromForm(payload: GoogleFormMemberPayload): Promise<{
+    member: Member;
+    outcome: GoogleFormSubmitOutcome;
+  }> {
     const phone = payload.phone.trim();
     if (!phone) {
       log.warn({ email: payload.email }, "Google Form payload missing phone");
@@ -41,25 +46,27 @@ export class GoogleFormWebhookService {
       "Processing Google Form member submission",
     );
 
-    const member = await this.members.create(
-      {
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        dni: payload.dni,
-        birthDate: payload.birthDate,
-        phone,
-        condition,
-        status: MEMBER_STATUS.ENABLED,
-      },
-      { source: "GOOGLE_FORM" },
-    );
+    const result = await this.members.createOrUpgradeFromGoogleForm({
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      dni: payload.dni,
+      birthDate: payload.birthDate,
+      phone,
+      condition,
+      status: MEMBER_STATUS.ENABLED,
+    });
 
     log.info(
-      { memberId: member.id, email: member.email, condition: member.condition },
-      "Google Form member created as enabled",
+      {
+        memberId: result.member.id,
+        email: result.member.email,
+        condition: result.member.condition,
+        outcome: result.outcome,
+      },
+      "Google Form member submission processed",
     );
-    return member;
+    return result;
   }
 
   private resolveCondition(

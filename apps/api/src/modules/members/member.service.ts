@@ -1,7 +1,8 @@
-import type { MemberCondition, Prisma } from "@prisma/client";
+import type { MemberCondition, Member as MemberRow, Prisma } from "@prisma/client";
 import type {
   CreateMemberRequest,
   DeleteMemberRequest,
+  Member,
   MemberAuditListQuery,
   MemberImportResult,
   MemberImportRowIdentity,
@@ -23,6 +24,7 @@ import {
   isValidOptionalMemberEmail,
   isValidOptionalMemberId,
   isValidOptionalMemberPhone,
+  MEMBER_CONDITIONS,
   MEMBER_DELETE_REASONS,
   MEMBER_EXCEL_HEADERS,
   MEMBER_EXTERNAL_ID_MAX_LENGTH,
@@ -40,6 +42,7 @@ import { toMemberDto } from "../../lib/mappers.js";
 import { prisma } from "../../lib/prisma.js";
 import {
   type MemberCreatedSource,
+  notifyAdminMemberUpgradedToAbonado,
   notifyAdminNewMember,
 } from "../../notifications/member-alerts.js";
 import {
@@ -166,6 +169,35 @@ export class MemberService {
 
     log.debug({ memberId: id }, "Fetched member by id");
     return toMemberDto(member);
+  }
+
+  /**
+   * Google Form: create new member, restore deleted, or upgrade Socio Regular → Abonado Tenis
+   * when the same email+DNI already exists as Habilitado.
+   */
+  async createOrUpgradeFromGoogleForm(input: CreateMemberRequest): Promise<{
+    member: Member;
+    outcome: "created" | "restored" | "upgraded" | "unchanged";
+  }> {
+    this.assertValidStatus(input.status);
+    const email = this.resolveOptionalEmail(input.email);
+    const dni = this.assertValidDni(input.dni);
+
+    if (!email) {
+      throw new AppError("Email is required for Google Form submissions", 400, "EMAIL_REQUIRED");
+    }
+
+    const existingByEmail = await prisma.member.findFirst({ where: { email } });
+
+    if (existingByEmail && !existingByEmail.deletedAt) {
+      return this.handleExistingGoogleFormMember(existingByEmail, input.condition, dni);
+    }
+
+    const member = await this.create(input, { source: "GOOGLE_FORM" });
+    return {
+      member,
+      outcome: existingByEmail?.deletedAt ? "restored" : "created",
+    };
   }
 
   async create(
@@ -513,6 +545,77 @@ export class MemberService {
       pageSize,
       totalPages: Math.max(Math.ceil(total / pageSize), 1),
     };
+  }
+
+  private async handleExistingGoogleFormMember(
+    existing: MemberRow,
+    requestedCondition: MemberCondition,
+    dni: string,
+  ): Promise<{ member: Member; outcome: "upgraded" | "unchanged" }> {
+    if (existing.dni !== dni) {
+      log.warn(
+        { email: existing.email, memberId: existing.id },
+        "Google Form rejected: email exists with different DNI",
+      );
+      throw new AppError("Email already in use with a different DNI", 409, "IDENTITY_MISMATCH");
+    }
+
+    if (existing.status !== MEMBER_STATUS.ENABLED) {
+      log.warn(
+        { email: existing.email, memberId: existing.id, status: existing.status },
+        "Google Form rejected: member exists but is not enabled",
+      );
+      throw new AppError(
+        "Member exists but is not enabled; update requires backoffice",
+        409,
+        "MEMBER_NOT_ENABLED",
+      );
+    }
+
+    if (requestedCondition === MEMBER_CONDITIONS.ABONADO_TENIS) {
+      if (existing.condition === MEMBER_CONDITIONS.ABONADO_TENIS) {
+        log.info(
+          { memberId: existing.id, email: existing.email },
+          "Google Form abonado submission is idempotent; member already Abonado Tenis",
+        );
+        return { member: toMemberDto(existing), outcome: "unchanged" };
+      }
+
+      if (existing.condition === MEMBER_CONDITIONS.SOCIO_REGULAR) {
+        const updated = await prisma.$transaction(async (tx) => {
+          const result = await tx.member.update({
+            where: { id: existing.id },
+            data: { condition: MEMBER_CONDITIONS.ABONADO_TENIS },
+          });
+          await recordMemberAudit(tx, {
+            action: "UPDATE",
+            before: existing,
+            after: result,
+            context: { source: "GOOGLE_FORM", actor: null },
+          });
+          return result;
+        });
+
+        const dto = toMemberDto(updated);
+        log.info(
+          { memberId: dto.id, email: dto.email },
+          "Google Form upgraded Socio Regular to Abonado Tenis",
+        );
+        void notifyAdminMemberUpgradedToAbonado(dto, "GOOGLE_FORM");
+        return { member: dto, outcome: "upgraded" };
+      }
+    }
+
+    log.warn(
+      {
+        email: existing.email,
+        memberId: existing.id,
+        existingCondition: existing.condition,
+        requestedCondition,
+      },
+      "Google Form rejected: email already in use",
+    );
+    throw new AppError("Email already in use", 409, "EMAIL_TAKEN");
   }
 
   private assertValidStatus(status: number): void {

@@ -80,7 +80,7 @@ Aplicación: `apps/api` (Fastify 5.x).
 - `POST|PATCH|DELETE /api/members` — `ADMIN` o `SUPER_ADMIN` (DELETE = soft delete con motivo). En PATCH, si el socio ya tiene email, solo `SUPER_ADMIN` puede cambiarlo o vaciarlo (`403 EMAIL_LOCKED`)
 - `GET /api/members/:id/audit` — solo `SUPER_ADMIN`; historial de auditoría paginado (`page`, `pageSize` ≤ 100), más reciente primero; `404` si el socio no existe. Modelo: `MemberAuditLog` en `docs/MODELOS.md`
 - `GET|POST|PATCH /api/users` — solo `SUPER_ADMIN`
-- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea socio Habilitado (`condition` opcional: `ABONADO_TENIS` default | `SOCIO_REGULAR`)
+- `POST /api/webhooks/google-form` — secret `X-Webhook-Secret`; crea socio Habilitado (`condition` opcional: `ABONADO_TENIS` default | `SOCIO_REGULAR`) o, si ya existe Socio Regular habilitado con el mismo email+DNI y el payload pide abonado, actualiza solo la condición (`outcome`: `created` \| `restored` \| `upgraded` \| `unchanged`)
 
 Integración Google Form: `docs/GOOGLE_FORM.md`.
 

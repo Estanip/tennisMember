@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Google Form: si un Socio Regular habilitado completa el form de abonado con el mismo email y DNI, se actualiza automáticamente a Abonado Tenis (auditoría + alerta al admin); reenvío de abonado ya existente es idempotente
 - Auditoría de socios: tabla `member_audit_log` (acción, origen, actor, estado anterior/posterior y campos cambiados) escrita en la misma transacción que cada alta/edición/baja/restablecimiento (backoffice, Google Form e import Excel); consulta `GET /api/members/:id/audit` solo `SUPER_ADMIN`
 - Web: historial de auditoría del socio (solo `SUPER_ADMIN`) en la edición del socio y como modal desde el listado (incluye eliminados)
 - Showcase/portfolio: banner **Modo demo** (`NEXT_PUBLIC_DEMO_MODE`) con hint de admin; login precarga credenciales; SQL `docs/showcase/demo-data.sql`.

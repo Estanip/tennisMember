@@ -88,7 +88,7 @@ export async function googleFormWebhookRoutes(app: FastifyInstance): Promise<voi
     {
       schema: {
         tags: ["Webhooks"],
-        summary: "Create member from Google Form (Abonado Tenis or Socio Regular)",
+        summary: "Create or upgrade member from Google Form (Abonado Tenis or Socio Regular)",
         headers: {
           type: "object",
           required: ["x-webhook-secret"],
@@ -98,13 +98,25 @@ export async function googleFormWebhookRoutes(app: FastifyInstance): Promise<voi
         },
         body: webhookBodySchema,
         response: {
-          201: {
+          200: {
             type: "object",
-            required: ["success", "data"],
+            required: ["success", "data", "outcome"],
             additionalProperties: false,
             properties: {
               success: { type: "boolean" },
               message: { type: "string" },
+              outcome: { type: "string", enum: ["upgraded", "unchanged"] },
+              data: memberSchema,
+            },
+          },
+          201: {
+            type: "object",
+            required: ["success", "data", "outcome"],
+            additionalProperties: false,
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+              outcome: { type: "string", enum: ["created", "restored"] },
               data: memberSchema,
             },
           },
@@ -120,12 +132,23 @@ export async function googleFormWebhookRoutes(app: FastifyInstance): Promise<voi
       webhookService.assertSecret(secret);
 
       const body = request.body as GoogleFormMemberPayload;
-      const data = await webhookService.createFromForm(body);
+      const { member, outcome } = await webhookService.createFromForm(body);
 
-      return reply.status(201).send({
+      const isCreate = outcome === "created" || outcome === "restored";
+      const message =
+        outcome === "upgraded"
+          ? "Member upgraded to Abonado Tenis from Google Form"
+          : outcome === "unchanged"
+            ? "Member already Abonado Tenis"
+            : outcome === "restored"
+              ? "Member restored from Google Form"
+              : "Member created from Google Form";
+
+      return reply.status(isCreate ? 201 : 200).send({
         success: true,
-        data,
-        message: "Member created from Google Form",
+        data: member,
+        outcome,
+        message,
       });
     },
   );
